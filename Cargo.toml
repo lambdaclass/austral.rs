@@ -1,6 +1,5 @@
 [workspace]
 resolver = "2"
-
 members = [
     "bin/austral_bin",
     "lib/austral_lib",
