@@ -1,6 +1,12 @@
-mod db;
+pub mod backend;
+pub mod db;
 pub mod error;
 pub mod lexer;
+//pub mod linearity_check;
+pub mod span;
+//pub mod stages;
+pub mod r#type;
+pub mod type_system;
 
 /// The Jar combines all the features provided by the salsa database.
 /// Every tracked function, interned value, query and input must be listed here.
