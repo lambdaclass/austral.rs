@@ -1,11 +1,13 @@
 mod db;
+pub mod error;
+pub mod lexer;
 
 /// The Jar combines all the features provided by the salsa database.
 /// Every tracked function, interned value, query and input must be listed here.
 #[salsa::jar(db = CompilerDatabase)]
 pub struct Jar(
     // examples from another project:
-    // == Queries == 
+    // == Queries ==
     // crate::parse::parse_program
 
     // == Interned values ==

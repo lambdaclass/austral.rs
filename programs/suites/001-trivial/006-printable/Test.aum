@@ -1,0 +1,30 @@
+pragma Unsafe_Module;
+
+module body Test is
+    pragma Foreign_Import(External_Name => "putchar");
+    function Put_Character(character: Nat8): Int32 is
+    end;
+
+    function main(): ExitCode is
+        printLn(nil);
+        printLn(false);
+        printLn(true);
+        printLn(maximum_nat8);
+        printLn(maximum_nat16);
+        printLn(maximum_nat32);
+        printLn(maximum_nat64);
+        printLn(minimum_int8);
+        printLn(minimum_int16);
+        printLn(minimum_int32);
+        printLn(minimum_int64);
+        printLn(maximum_int8);
+        printLn(maximum_int16);
+        printLn(maximum_int32);
+        printLn(maximum_int64);
+        printLn(3.14 : Float64);
+        printLn(3.14 : Float64);
+        printLn("");
+        printLn("Hello, world!");
+        return ExitSuccess();
+    end;
+end module body.
