@@ -20,7 +20,6 @@ impl<'m> Module<'m> {
         }
     }
 
-    #[allow(dead_code)]
     pub fn module(&self) -> &MeliorModule {
         &self.melior_module
     }

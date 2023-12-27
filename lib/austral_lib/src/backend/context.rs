@@ -27,7 +27,6 @@ impl Context {
         Self { melior_context }
     }
 
-    #[allow(dead_code)]
     /// Compiles an Austral program into MLIR and then lowers to LLVM.
     /// Returns the corresponding Module struct.
     pub fn compile(&self, program: &Program) -> Result<Module, CompilerError> {
