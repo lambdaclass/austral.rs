@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+chumsky = "1.0.0-alpha.6"
 derive-new = "0.5.9"
-salsa = { git = "https://github.com/salsa-rs/salsa.git", package = "salsa-2022" }
 logos = "0.13.0"
+salsa = { git = "https://github.com/salsa-rs/salsa.git", package = "salsa-2022" }
 serde = { version = "1.0.193", features = ["derive"] }
 thiserror = "1.0.51"
 

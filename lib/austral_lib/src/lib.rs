@@ -1,3 +1,4 @@
+pub mod ast;
 mod db;
 pub mod error;
 pub mod lexer;
