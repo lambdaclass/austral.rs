@@ -1,4 +1,5 @@
-mod db;
+pub mod backend;
+pub mod db;
 pub mod error;
 pub mod lexer;
 pub mod r#type;
