@@ -1,5 +1,20 @@
-use std::borrow::Cow;
+use crate::error::{LexerError, LexerResult as Result};
 use logos::{Lexer, Logos};
+use std::{borrow::Cow, ops::Range};
+
+pub fn parse(input: &str) -> impl '_ + Iterator<Item = (Result<Token>, Range<usize>)> {
+    Token::lexer(input).spanned().map(|(token, span)| {
+        (
+            token.map_err(|_| {
+                LexerError::UnexpectedInput(
+                    Cow::Borrowed(std::str::from_utf8(&input.as_bytes()[span.clone()]).unwrap()),
+                    span.clone(),
+                )
+            }),
+            span,
+        )
+    })
+}
 
 #[derive(Clone, Debug, Logos, PartialEq)]
 pub enum Token<'a> {
