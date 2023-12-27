@@ -6,3 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+derive-new = "0.5.9"
+thiserror = "1.0"
+salsa = { git = "https://github.com/salsa-rs/salsa.git", package = "salsa-2022" }

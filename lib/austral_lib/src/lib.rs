@@ -1,14 +1,28 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+mod db;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// The Jar combines all the features provided by the salsa database.
+/// Every tracked function, interned value, query and input must be listed here.
+#[salsa::jar(db = CompilerDatabase)]
+pub struct Jar(
+    // examples from another project:
+    // == Queries == 
+    // crate::parse::parse_program
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    // == Interned values ==
+    // crate::ast::ProgramId,
+    // crate::ast::StatementId,
+    // crate::ast::FunctionId,
+
+    // == Tracked functions ==
+    // crate::ast::Program,
+);
+
+pub trait CompilerDatabase: salsa::DbWithJar<Jar> {} // + salsa::DbWithJar<parser::Jar> {}
+
+// blanket implementation for every type that implements DbWithJar<Jar>.
+// This will allow the db::Database to implement ParserDatabase without a
+// concrete implemetation.
+impl<DB> CompilerDatabase for DB where
+    DB: ?Sized + salsa::DbWithJar<Jar> // + salsa::DbWithJar<parser::Jar> // we can combine Jars here.
+{
 }
