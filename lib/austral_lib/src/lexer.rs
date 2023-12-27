@@ -1,8 +1,9 @@
 use crate::error::{LexerError, LexerResult as Result};
 use logos::{Lexer, Logos};
+use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, ops::Range};
 
-pub fn parse(input: &str) -> impl '_ + Iterator<Item = (Result<Token>, Range<usize>)> {
+pub fn lex(input: &str) -> impl '_ + Iterator<Item = (Result<Token>, Range<usize>)> {
     Token::lexer(input).spanned().map(|(token, span)| {
         (
             token.map_err(|_| {
@@ -16,7 +17,8 @@ pub fn parse(input: &str) -> impl '_ + Iterator<Item = (Result<Token>, Range<usi
     })
 }
 
-#[derive(Clone, Debug, Logos, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Logos, PartialEq, Serialize)]
+#[logos(skip r"\s+")]
 pub enum Token<'a> {
     #[token(r"(")]
     LParen,
@@ -192,7 +194,7 @@ pub enum Token<'a> {
 }
 
 /// An universe.
-#[derive(Clone, Copy, Debug, Eq, Hash, Logos, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Logos, PartialEq, Serialize)]
 pub enum Universe {
     Free,
     Linear,

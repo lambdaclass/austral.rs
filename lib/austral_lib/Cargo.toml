@@ -5,4 +5,10 @@ edition = "2021"
 
 [dependencies]
 logos = "0.13.0"
+serde = { version = "1.0.193", features = ["derive"] }
 thiserror = "1.0.51"
+
+[dev-dependencies]
+pretty_assertions = "1.4.0"
+ron = "0.8.1"
+test-case = "3.3.1"
