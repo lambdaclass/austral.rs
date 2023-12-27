@@ -1,3 +1,5 @@
+use crate::common::Identifier;
+
 pub enum Universe {
     FreeUniverse,
     LinearUniverse,
@@ -37,3 +39,5 @@ pub enum IntegerWidth {
     WidthByteSize,
     WidthIndex,
 }
+
+pub struct ValueParameter(pub Identifier, pub Ty);
