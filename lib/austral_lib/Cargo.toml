@@ -9,6 +9,7 @@ salsa = { git = "https://github.com/salsa-rs/salsa.git", package = "salsa-2022" 
 logos = "0.13.0"
 serde = { version = "1.0.193", features = ["derive"] }
 thiserror = "1.0.51"
+melior = { version = "0.15.0" }
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"

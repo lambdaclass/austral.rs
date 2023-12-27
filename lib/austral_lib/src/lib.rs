@@ -1,5 +1,6 @@
+pub mod backend;
 pub mod common;
-mod db;
+pub mod db;
 pub mod error;
 pub mod lexer;
 //pub mod linearity_check;
