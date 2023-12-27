@@ -95,7 +95,7 @@ pub enum CompoundExpr {
     Logic(LogicExpr),
     Arith(ArithExpr),
     Select(SelectExpr),
-    Discard(AtomicExpr),
+    Cast(CastExpr),
 }
 
 impl CompoundExpr {
@@ -105,7 +105,7 @@ impl CompoundExpr {
             LogicExpr::parser().map(Self::Logic),
             ArithExpr::parser().map(Self::Arith),
             SelectExpr::parser().map(Self::Select),
-            AtomicExpr::parser().map(Self::Discard),
+            CastExpr::parser().map(Self::Cast),
         ))
     }
 }
@@ -235,6 +235,21 @@ impl SelectExpr {
             value_true,
             value_false,
         })
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct CastExpr {
+    pub value: AtomicExpr,
+    pub r#type: TypeSpec,
+}
+
+impl CastExpr {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+        AtomicExpr::parser()
+            .then_ignore(just(Token::Colon))
+            .then(TypeSpec::parser())
+            .map(|(value, r#type)| Self { value, r#type })
     }
 }
 

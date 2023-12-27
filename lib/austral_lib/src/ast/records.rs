@@ -1,13 +1,13 @@
-use super::{Ident, TypeParam, TypeSpec, Universe};
+use super::{DocString, Ident, Pragma, TypeParam, TypeSpec, Universe};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct RecordDecl {
-    // TODO: doc_string: Option<DocString>,
-    // TODO: pragmas: Vec<Pragma>,
-    //
+    doc_string: Option<DocString>,
+    pragmas: Vec<Pragma>,
+
     name: Ident,
     type_params: Vec<TypeParam>,
     universe: Universe,
@@ -17,6 +17,8 @@ pub struct RecordDecl {
 impl RecordDecl {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
         group((
+            DocString::parser().or_not(),
+            Pragma::parser().repeated().collect::<Vec<_>>(),
             just(Token::Record).ignore_then(Ident::parser()),
             TypeParam::parser()
                 .separated_by(just(Token::Comma))
@@ -35,19 +37,23 @@ impl RecordDecl {
                 )
                 .then_ignore(just(Token::End).then_ignore(just(Token::Semi))),
         ))
-        .map(|(name, type_params, universe, slots)| Self {
-            name,
-            type_params,
-            universe,
-            slots,
-        })
+        .map(
+            |(doc_string, pragmas, name, type_params, universe, slots)| Self {
+                doc_string,
+                pragmas,
+                name,
+                type_params,
+                universe,
+                slots,
+            },
+        )
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Slot {
-    // TODO: doc_string: Option<DocString>,
-    //
+    doc_string: Option<DocString>,
+
     name: Ident,
     r#type: TypeSpec,
 }
@@ -55,11 +61,16 @@ pub struct Slot {
 impl Slot {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
         group((
+            DocString::parser().or_not(),
             Ident::parser(),
             just(Token::Colon)
                 .ignore_then(TypeSpec::parser())
                 .then_ignore(just(Token::Semi)),
         ))
-        .map(|(name, r#type)| Self { name, r#type })
+        .map(|(doc_string, name, r#type)| Self {
+            doc_string,
+            name,
+            r#type,
+        })
     }
 }

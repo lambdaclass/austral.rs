@@ -6,7 +6,7 @@ use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum Module {
     Decl(ModuleDecl),
     Def(ModuleDef),
@@ -21,7 +21,7 @@ impl Module {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct ModuleDecl {
     doc_string: Option<DocString>,
     imports: Vec<ImportStmt>,
@@ -43,7 +43,7 @@ impl ModuleDecl {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum ModuleDeclItem {
     Constant(ConstantDecl),
     Function(FunctionDecl),

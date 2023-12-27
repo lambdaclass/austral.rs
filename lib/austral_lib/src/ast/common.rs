@@ -1,3 +1,4 @@
+use super::FnCallArgs;
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -26,7 +27,7 @@ impl DocString {
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Ident {
-    name: String,
+    pub name: String,
 }
 
 impl Ident {
@@ -58,9 +59,9 @@ impl Universe {
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct TypeParam {
-    name: Ident,
-    universe: Universe,
-    params: Vec<Ident>,
+    pub name: Ident,
+    pub universe: Universe,
+    pub params: Vec<Ident>,
 }
 
 impl TypeParam {
@@ -81,5 +82,26 @@ impl TypeParam {
             universe,
             params,
         })
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct Pragma {
+    pub name: Ident,
+    pub args: FnCallArgs,
+}
+
+impl Pragma {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+        just(Token::Pragma)
+            .ignore_then(Ident::parser())
+            .then(
+                FnCallArgs::parser()
+                    .delimited_by(just(Token::LParen), just(Token::RParen))
+                    .or_not()
+                    .map(Option::unwrap_or_default),
+            )
+            .then_ignore(just(Token::Semi))
+            .map(|(name, args)| Self { name, args })
     }
 }

@@ -1,25 +1,32 @@
-use super::{Ident, Universe};
+use super::{DocString, Ident, Pragma, Universe};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct TypeDecl {
-    // TODO: doc_string: Option<DocString>,
-    // TODO: pragmas: Vec<Pragma>,
-    //
+    doc_string: Option<DocString>,
+    pragmas: Vec<Pragma>,
+
     name: Ident,
     universe: Universe,
 }
 
 impl TypeDecl {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
-        just(Token::Type)
-            .ignore_then(Ident::parser())
-            .then_ignore(just(Token::Colon))
-            .then(Universe::parser())
-            .then_ignore(just(Token::Semi))
-            .map(|(name, universe)| Self { name, universe })
+        group((
+            DocString::parser().or_not(),
+            Pragma::parser().repeated().collect::<Vec<_>>(),
+            just(Token::Type).ignore_then(Ident::parser()),
+            just(Token::Colon).ignore_then(Universe::parser()),
+        ))
+        .then_ignore(just(Token::Semi))
+        .map(|(doc_string, pragmas, name, universe)| Self {
+            doc_string,
+            pragmas,
+            name,
+            universe,
+        })
     }
 }
 

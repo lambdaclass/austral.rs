@@ -1,5 +1,5 @@
 pub use self::{
-    common::{DocString, Ident, TypeParam, Universe},
+    common::{DocString, Ident, Pragma, TypeParam, Universe},
     constants::{ConstantDecl, ConstantDef},
     expressions::{
         ArithExpr, AtomicExpr, CmpExpr, CompoundExpr, Expression, FnCallArgs, FnCallExpr,

@@ -1,13 +1,14 @@
-use super::{Ident, TypeParam, TypeSpec};
+use super::{DocString, Ident, Pragma, Statement, TypeParam, TypeSpec};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::ops::{Deref, DerefMut};
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct FunctionDecl {
-    // TODO: doc_string: Option<DocString>,
-    // TODO: pragmas: Vec<Pragma>,
-    //
+    doc_string: Option<DocString>,
+    pragmas: Vec<Pragma>,
+
     type_params: Vec<TypeParam>,
     name: Ident,
     params: Vec<Param>,
@@ -17,6 +18,8 @@ pub struct FunctionDecl {
 impl FunctionDecl {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
         group((
+            DocString::parser().or_not(),
+            Pragma::parser().repeated().collect::<Vec<_>>(),
             just(Token::Generic)
                 .ignore_then(
                     TypeParam::parser()
@@ -37,30 +40,87 @@ impl FunctionDecl {
                 .ignore_then(TypeSpec::parser())
                 .then_ignore(just(Token::Semi)),
         ))
-        .map(|(type_params, name, params, ret_type)| Self {
-            type_params,
-            name,
-            params,
-            ret_type,
-        })
+        .map(
+            |(doc_string, pragmas, type_params, name, params, ret_type)| Self {
+                doc_string,
+                pragmas,
+                type_params,
+                name,
+                params,
+                ret_type,
+            },
+        )
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct FunctionDef {
-    // TODO: Populate.
+    decl: FunctionDecl,
+    body: Vec<Statement>,
 }
 
 impl FunctionDef {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
-        todo()
+        group((
+            DocString::parser().or_not(),
+            Pragma::parser().repeated().collect::<Vec<_>>(),
+            just(Token::Generic)
+                .ignore_then(
+                    TypeParam::parser()
+                        .separated_by(just(Token::Comma))
+                        .allow_trailing()
+                        .collect::<Vec<_>>()
+                        .delimited_by(just(Token::LBracket), just(Token::RBracket)),
+                )
+                .or_not()
+                .map(Option::unwrap_or_default),
+            just(Token::Function).ignore_then(Ident::parser()),
+            Param::parser()
+                .separated_by(just(Token::Comma))
+                .allow_trailing()
+                .collect::<Vec<_>>()
+                .delimited_by(just(Token::LParen), just(Token::RParen)),
+            just(Token::Colon).ignore_then(TypeSpec::parser()),
+            Statement::parser()
+                .repeated()
+                .collect::<Vec<_>>()
+                .delimited_by(just(Token::Is), just(Token::End)),
+        ))
+        .then_ignore(just(Token::Semi))
+        .map(
+            |(doc_string, pragmas, type_params, name, params, ret_type, body)| Self {
+                decl: FunctionDecl {
+                    doc_string,
+                    pragmas,
+                    type_params,
+                    name,
+                    params,
+                    ret_type,
+                },
+                body,
+            },
+        )
+    }
+}
+
+impl Deref for FunctionDef {
+    type Target = FunctionDecl;
+
+    fn deref(&self) -> &Self::Target {
+        &self.decl
+    }
+}
+
+impl DerefMut for FunctionDef {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.decl
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct MethodDecl {
-    // TODO: doc_string: Option<DocString>,
-    //
+    doc_string: Option<DocString>,
+
     type_params: Vec<TypeParam>,
     name: Ident,
     params: Vec<Param>,
@@ -70,6 +130,7 @@ pub struct MethodDecl {
 impl MethodDecl {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
         group((
+            DocString::parser().or_not(),
             just(Token::Generic)
                 .ignore_then(
                     TypeParam::parser()
@@ -90,7 +151,8 @@ impl MethodDecl {
                 .ignore_then(TypeSpec::parser())
                 .then_ignore(just(Token::Semi)),
         ))
-        .map(|(type_params, name, params, ret_ty)| Self {
+        .map(|(doc_string, type_params, name, params, ret_ty)| Self {
+            doc_string,
             type_params,
             name,
             params,
@@ -99,14 +161,65 @@ impl MethodDecl {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct MethodDef {
-    // TODO: Populate.
+    decl: MethodDecl,
+    body: Vec<Statement>,
 }
 
 impl MethodDef {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
-        todo()
+        group((
+            DocString::parser().or_not(),
+            just(Token::Generic)
+                .ignore_then(
+                    TypeParam::parser()
+                        .separated_by(just(Token::Comma))
+                        .allow_trailing()
+                        .collect::<Vec<_>>()
+                        .delimited_by(just(Token::LBracket), just(Token::RBracket)),
+                )
+                .or_not()
+                .map(Option::unwrap_or_default),
+            just(Token::Method).ignore_then(Ident::parser()),
+            Param::parser()
+                .separated_by(just(Token::Comma))
+                .allow_trailing()
+                .collect::<Vec<_>>()
+                .delimited_by(just(Token::LParen), just(Token::RParen)),
+            just(Token::Colon).ignore_then(TypeSpec::parser()),
+            Statement::parser()
+                .repeated()
+                .collect::<Vec<_>>()
+                .delimited_by(just(Token::Is), just(Token::End)),
+        ))
+        .then_ignore(just(Token::Semi))
+        .map(
+            |(doc_string, type_params, name, params, ret_ty, body)| Self {
+                decl: MethodDecl {
+                    doc_string,
+                    type_params,
+                    name,
+                    params,
+                    ret_ty,
+                },
+                body,
+            },
+        )
+    }
+}
+
+impl Deref for MethodDef {
+    type Target = MethodDecl;
+
+    fn deref(&self) -> &Self::Target {
+        &self.decl
+    }
+}
+
+impl DerefMut for MethodDef {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.decl
     }
 }
 

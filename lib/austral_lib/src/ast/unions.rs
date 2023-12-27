@@ -1,13 +1,13 @@
-use super::{Ident, Slot, TypeParam};
+use super::{DocString, Ident, Pragma, Slot, TypeParam};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct UnionDecl {
-    // TODO: doc_string: Option<DocString>,
-    // TODO: pragmas: Vec<Pragma>,
-    //
+    doc_string: Option<DocString>,
+    pragmas: Vec<Pragma>,
+
     name: Ident,
     type_params: Vec<TypeParam>,
     cases: Vec<Case>,
@@ -16,6 +16,8 @@ pub struct UnionDecl {
 impl UnionDecl {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
         group((
+            DocString::parser().or_not(),
+            Pragma::parser().repeated().collect::<Vec<_>>(),
             just(Token::Union).ignore_then(Ident::parser()),
             TypeParam::parser()
                 .separated_by(just(Token::Comma))
@@ -29,7 +31,9 @@ impl UnionDecl {
                 .then_ignore(just(Token::End))
                 .then_ignore(just(Token::Semi)),
         ))
-        .map(|(name, type_params, cases)| Self {
+        .map(|(doc_string, pragmas, name, type_params, cases)| Self {
+            doc_string,
+            pragmas,
             name,
             type_params,
             cases,
@@ -39,8 +43,8 @@ impl UnionDecl {
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Case {
-    // TODO: doc_string: Option<DocString>,
-    //
+    doc_string: Option<DocString>,
+
     name: Ident,
     fields: Vec<Slot>,
 }
@@ -48,6 +52,7 @@ pub struct Case {
 impl Case {
     pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
         group((
+            DocString::parser().or_not(),
             just(Token::Case).ignore_then(Ident::parser()),
             just(Token::Is)
                 .ignore_then(Slot::parser().repeated().collect::<Vec<_>>())
@@ -55,6 +60,10 @@ impl Case {
                 .map(Option::unwrap_or_default),
         ))
         .then_ignore(just(Token::Semi))
-        .map(|(name, fields)| Self { name, fields })
+        .map(|(doc_string, name, fields)| Self {
+            doc_string,
+            name,
+            fields,
+        })
     }
 }
