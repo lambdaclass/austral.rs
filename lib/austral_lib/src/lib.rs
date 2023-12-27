@@ -2,6 +2,9 @@ pub mod backend;
 pub mod db;
 pub mod error;
 pub mod lexer;
+//pub mod linearity_check;
+pub mod span;
+//pub mod stages;
 pub mod r#type;
 pub mod type_system;
 
