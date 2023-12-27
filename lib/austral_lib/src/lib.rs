@@ -1,3 +1,4 @@
+mod backend;
 mod db;
 pub mod error;
 pub mod lexer;
