@@ -11,7 +11,16 @@ pub struct SpanLocation {
     pub column: NonZeroUsize,
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+impl Default for SpanLocation {
+    fn default() -> Self {
+        Self {
+            line: NonZeroUsize::MIN,
+            column: NonZeroUsize::MIN,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Default)]
 pub struct Span {
     pub context: SpanContext,
     pub range: Range<SpanLocation>,
