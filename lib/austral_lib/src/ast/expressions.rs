@@ -549,13 +549,7 @@ impl FnCallArgs {
                             .at_least(1)
                             .allow_trailing()
                             .collect::<HashMap<_, _>>()
-                            .map(|params| {
-                                if params.is_empty() {
-                                    Self::Empty
-                                } else {
-                                    Self::Named(params)
-                                }
-                            }),
+                            .map(Self::Named),
                         Expression::recursive_parser(cache.clone())
                             .separated_by(just(Token::Comma))
                             .at_least(1)
