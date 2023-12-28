@@ -6,13 +6,13 @@ use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct FunctionDecl {
-    doc_string: Option<DocString>,
-    pragmas: Vec<Pragma>,
+    pub doc_string: Option<DocString>,
+    pub pragmas: Vec<Pragma>,
 
-    type_params: Vec<TypeParam>,
-    name: Ident,
-    params: Vec<Param>,
-    ret_type: TypeSpec,
+    pub type_params: Vec<TypeParam>,
+    pub name: Ident,
+    pub params: Vec<Param>,
+    pub ret_type: TypeSpec,
 }
 
 impl FunctionDecl {
@@ -55,8 +55,8 @@ impl FunctionDecl {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct FunctionDef {
-    decl: FunctionDecl,
-    body: Vec<Statement>,
+    pub decl: FunctionDecl,
+    pub body: Vec<Statement>,
 }
 
 impl FunctionDef {
@@ -119,12 +119,12 @@ impl DerefMut for FunctionDef {
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct MethodDecl {
-    doc_string: Option<DocString>,
+    pub doc_string: Option<DocString>,
 
-    type_params: Vec<TypeParam>,
-    name: Ident,
-    params: Vec<Param>,
-    ret_ty: TypeSpec,
+    pub type_params: Vec<TypeParam>,
+    pub name: Ident,
+    pub params: Vec<Param>,
+    pub ret_ty: TypeSpec,
 }
 
 impl MethodDecl {
@@ -163,8 +163,8 @@ impl MethodDecl {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct MethodDef {
-    decl: MethodDecl,
-    body: Vec<Statement>,
+    pub decl: MethodDecl,
+    pub body: Vec<Statement>,
 }
 
 impl MethodDef {
@@ -225,8 +225,8 @@ impl DerefMut for MethodDef {
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Param {
-    name: Ident,
-    r#type: TypeSpec,
+    pub name: Ident,
+    pub r#type: TypeSpec,
 }
 
 impl Param {

@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod backend;
 pub mod common;
+pub mod compiler;
 pub mod db;
 pub mod error;
 pub mod lexer;

@@ -4,7 +4,7 @@ use melior::{dialect::DialectRegistry, Context};
 
 fn main() {
     let tokens =
-        austral_lib::lexer::lex(include_str!("../../../programs/examples/hello_world.aum"))
+        austral_lib::lexer::lex(include_str!("../../../programs/examples/empty_program.aum"))
             .map(|(token, _span)| token)
             .collect::<Result<Vec<_>, _>>()
             .unwrap();

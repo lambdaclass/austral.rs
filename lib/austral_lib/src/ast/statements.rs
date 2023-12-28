@@ -67,8 +67,8 @@ impl Statement {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct AssignStmt {
-    target: PathExpr,
-    value: Expression,
+    pub target: PathExpr,
+    pub value: Expression,
 }
 
 impl AssignStmt {
@@ -83,13 +83,13 @@ impl AssignStmt {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct BorrowStmt {
-    name: Ident,
-    mut_mode: BorrowMutMode,
-    r#type: TypeSpec,
-    reg: Ident,
-    mode: BorrowMode,
-    orig: Ident,
-    body: Vec<Statement>,
+    pub name: Ident,
+    pub mut_mode: BorrowMutMode,
+    pub r#type: TypeSpec,
+    pub reg: Ident,
+    pub mode: BorrowMode,
+    pub orig: Ident,
+    pub body: Vec<Statement>,
 }
 
 impl BorrowStmt {
@@ -142,8 +142,8 @@ impl BorrowStmt {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct CaseStmt {
-    value: Expression,
-    variants: Vec<CaseWhen>,
+    pub value: Expression,
+    pub variants: Vec<CaseWhen>,
 }
 
 impl CaseStmt {
@@ -183,9 +183,9 @@ impl CaseStmt {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct CaseWhen {
-    ident: Ident,
-    bindings: Vec<Binding>,
-    block: Vec<Statement>,
+    pub ident: Ident,
+    pub bindings: Vec<Binding>,
+    pub block: Vec<Statement>,
 }
 
 impl CaseWhen {
@@ -231,9 +231,9 @@ impl CaseWhen {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct ForStmt {
-    name: Ident,
-    range: Range<Expression>,
-    contents: Vec<Statement>,
+    pub name: Ident,
+    pub range: Range<Expression>,
+    pub contents: Vec<Statement>,
 }
 
 impl ForStmt {
@@ -280,9 +280,9 @@ impl ForStmt {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct IfStmt {
-    value: Expression,
-    contents: Vec<Statement>,
-    r#else: Option<Vec<Statement>>,
+    pub value: Expression,
+    pub contents: Vec<Statement>,
+    pub r#else: Option<Vec<Statement>>,
 }
 
 impl IfStmt {
@@ -335,9 +335,9 @@ impl IfStmt {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct LetStmt {
-    is_mutable: bool,
-    target: LetStmtTarget,
-    value: Expression,
+    pub is_mutable: bool,
+    pub target: LetStmtTarget,
+    pub value: Expression,
 }
 
 impl LetStmt {
@@ -381,8 +381,8 @@ impl LetStmtTarget {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct WhileStmt {
-    value: Expression,
-    contents: Vec<Statement>,
+    pub value: Expression,
+    pub contents: Vec<Statement>,
 }
 
 impl WhileStmt {
@@ -455,9 +455,9 @@ impl BorrowMode {
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Binding {
-    name: Ident,
-    rename: Option<Ident>,
-    r#type: TypeSpec,
+    pub name: Ident,
+    pub rename: Option<Ident>,
+    pub r#type: TypeSpec,
 }
 
 impl Binding {
@@ -510,11 +510,10 @@ mod statement_parser_tests {
     fn test_return_stmt() {
         let input = vec![Token::Return, Token::Ident("foo"), Token::Semi];
 
-        let expected =
-            Statement::Return(Expression::Atomic(AtomicExpr::Path(PathExpr {
-                first: Ident::new("foo"),
-                extra: vec![],
-            })));
+        let expected = Statement::Return(Expression::Atomic(AtomicExpr::Path(PathExpr {
+            first: Ident::new("foo"),
+            extra: vec![],
+        })));
 
         let actual = Statement::parser().parse(&input).unwrap();
 
