@@ -1,7 +1,6 @@
 use crate::{
     common::Identifier,
-    r#type::{Ty, Universe},
-    span::Span,
+    r#type::Universe,
     stages::{TExpr, TStmt},
     type_system::type_universe,
 };
@@ -105,7 +104,7 @@ pub fn check_statement(
         TStmt::TDestructure(_, _, _, _, _) => todo!(),
         TStmt::TAssignVar(_, _, _) => todo!(),
         TStmt::TInitialAssign(_, _) => todo!(),
-        TStmt::TIf(_, cond, then_stmt, else_stmt) => {
+        TStmt::TIf(_, _cond, then_stmt, else_stmt) => {
             let cond_result = true; //check_expression(state_table, depth, cond);
             let mut then_table = state_table.clone();
             let mut else_table = state_table.clone();
@@ -117,19 +116,19 @@ pub fn check_statement(
         TStmt::TCase(_, _, _, _) => {
             todo!()
         }
-        TStmt::TWhile(_, cond, body) => {
+        TStmt::TWhile(_, _cond, body) => {
             //check_expression(state_table, depth, cond) &&
-            check_statement(stmt_name, state_table, stmt, depth + 1)
+            check_statement(stmt_name, state_table, body, depth + 1)
         }
         TStmt::TFor(_, _, start, end, body) => {
             check_expression(state_table, depth, start)
                 && check_expression(state_table, depth, end)
-                && check_statement(stmt_name, state_table, stmt, depth + 1)
+                && check_statement(stmt_name, state_table, body, depth + 1)
         }
     }
 }
 
-fn check_expression(state_table: &mut StateTable, depth: i32, texpr: &TExpr) -> bool {
+fn check_expression(_state_table: &mut StateTable, _depth: i32, _texpr: &TExpr) -> bool {
     true
 }
 
