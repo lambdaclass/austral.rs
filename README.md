@@ -19,6 +19,24 @@ source env-macos.sh
 ```
 After that, `cargo build --all` should work.
 
+## Running the CLI
+
+Run:
+
+```bash
+cd bin/austral_bin
+cargo r -- <module_file>
+```
+
+For now, it only prints the AST to stdout.
+
+For instance, to print the AST of the hello world example program:
+
+```bash
+cd bin/austral_bin
+cargo r -- ../../programs/examples/hello_world.aum
+```
+
 ## Docs
 
 [OCaml code analysis](docs/ocaml_code_analysis.md)
