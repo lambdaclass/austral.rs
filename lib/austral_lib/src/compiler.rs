@@ -1,21 +1,32 @@
 use crate::ast::{
-    ArithExpr, AtomicExpr, CompoundExpr, Expression, FunctionDef, LetStmtTarget, ModuleDecl,
-    ModuleDef, ModuleDefItem, TypeSpec,
+    ArithExpr, AtomicExpr, CompoundExpr, Expression, FnCallArgs, FunctionDef, LetStmtTarget,
+    ModuleDecl, ModuleDef, ModuleDefItem, TypeSpec,
 };
 use melior::{
-    dialect::{arith, func},
+    dialect::{arith, func, index, llvm, memref},
     ir::{
-        attribute::{IntegerAttribute, StringAttribute, TypeAttribute},
-        r#type::{FunctionType, IntegerType},
-        Block, Location, Module, Region, Type, Value,
+        attribute::{
+            DenseElementsAttribute, FlatSymbolRefAttribute, IntegerAttribute, StringAttribute,
+            TypeAttribute,
+        },
+        operation::OperationBuilder,
+        r#type::{FunctionType, IntegerType, MemRefType, RankedTensorType},
+        Block, Identifier, Location, Module, Region, Type, Value,
     },
     Context,
 };
-use std::{borrow::Cow, collections::HashMap, ops::Deref};
+use std::{
+    borrow::Cow,
+    collections::{hash_map::Entry, HashMap},
+    ops::Deref,
+    sync::Mutex,
+};
 
-pub struct BuildContext<'c> {
+struct BuildContext<'c> {
     context: &'c Context,
     module: Module<'c>,
+
+    literal_str: Mutex<HashMap<String, usize>>,
 }
 
 impl<'c> Deref for BuildContext<'c> {
@@ -34,7 +45,46 @@ pub fn compile<'c>(
     let build_context = BuildContext {
         context,
         module: Module::new(Location::unknown(context)),
+
+        literal_str: Mutex::new(HashMap::default()),
     };
+
+    build_context.module.body().append_operation(func::func(
+        &build_context,
+        StringAttribute::new(&build_context, "puts"),
+        TypeAttribute::new(
+            FunctionType::new(
+                context,
+                &[llvm::r#type::opaque_pointer(&build_context)],
+                &[IntegerType::new(context, 32).into()],
+            )
+            .into(),
+        ),
+        Region::new(),
+        &[(
+            Identifier::new(&build_context, "sym_visibility"),
+            StringAttribute::new(&build_context, "private").into(),
+        )],
+        Location::unknown(context),
+    ));
+    build_context.module.body().append_operation(func::func(
+        &build_context,
+        StringAttribute::new(&build_context, "putchar"),
+        TypeAttribute::new(
+            FunctionType::new(
+                context,
+                &[IntegerType::new(context, 8).into()],
+                &[IntegerType::new(context, 32).into()],
+            )
+            .into(),
+        ),
+        Region::new(),
+        &[(
+            Identifier::new(&build_context, "sym_visibility"),
+            StringAttribute::new(&build_context, "private").into(),
+        )],
+        Location::unknown(context),
+    ));
 
     for module_item in &root.contents {
         match module_item {
@@ -137,6 +187,151 @@ fn build_expr<'c, 'b>(
                 .result(0)
                 .unwrap()
                 .into(),
+            AtomicExpr::ConstStr(value) => {
+                let mut literal_str = ctx.literal_str.lock().unwrap();
+
+                let num_literals = literal_str.len();
+                let literal_idx = match literal_str.entry(value.clone()) {
+                    Entry::Occupied(entry) => *entry.get(),
+                    Entry::Vacant(entry) => {
+                        ctx.module.body().append_operation(memref::global(
+                            ctx,
+                            &format!("LiteralStr{num_literals}"),
+                            None,
+                            MemRefType::new(
+                                IntegerType::new(ctx, 8).into(),
+                                &[value.len() as u64],
+                                None,
+                                None,
+                            ),
+                            Some(
+                                DenseElementsAttribute::new(
+                                    RankedTensorType::new(
+                                        &[value.len() as u64],
+                                        IntegerType::new(ctx, 8).into(),
+                                        None,
+                                    )
+                                    .into(),
+                                    &value
+                                        .bytes()
+                                        .map(|x| {
+                                            IntegerAttribute::new(
+                                                x as i64,
+                                                IntegerType::new(ctx, 8).into(),
+                                            )
+                                            .into()
+                                        })
+                                        .collect::<Vec<_>>(),
+                                )
+                                .unwrap()
+                                .into(),
+                            ),
+                            true,
+                            None,
+                            Location::unknown(ctx),
+                        ));
+
+                        *entry.insert(num_literals)
+                    }
+                };
+
+                let value = block
+                    .append_operation(memref::get_global(
+                        ctx,
+                        &format!("LiteralStr{literal_idx}"),
+                        MemRefType::new(
+                            IntegerType::new(ctx, 8).into(),
+                            &[value.len() as u64],
+                            None,
+                            None,
+                        ),
+                        Location::unknown(ctx),
+                    ))
+                    .result(0)
+                    .unwrap()
+                    .into();
+                let value = block
+                    .append_operation(
+                        OperationBuilder::new(
+                            "memref.extract_aligned_pointer_as_index",
+                            Location::unknown(ctx),
+                        )
+                        .add_operands(&[value])
+                        .add_results(&[Type::index(ctx)])
+                        .build()
+                        .unwrap(),
+                    )
+                    .result(0)
+                    .unwrap()
+                    .into();
+                let value = block
+                    .append_operation(index::castu(
+                        value,
+                        IntegerType::new(ctx, 64).into(),
+                        Location::unknown(ctx),
+                    ))
+                    .result(0)
+                    .unwrap()
+                    .into();
+                block
+                    .append_operation(
+                        OperationBuilder::new("llvm.inttoptr", Location::unknown(ctx))
+                            .add_operands(&[value])
+                            .add_results(&[llvm::r#type::opaque_pointer(ctx)])
+                            .build()
+                            .unwrap(),
+                    )
+                    .result(0)
+                    .unwrap()
+                    .into()
+            }
+            AtomicExpr::FnCall(expr) => {
+                let args = match &expr.args {
+                    FnCallArgs::Empty => todo!(),
+                    FnCallArgs::Positional(args) => args.as_slice(),
+                    FnCallArgs::Named(_) => todo!(),
+                }
+                .iter()
+                .map(|expr| {
+                    let expr = process_expr(expr);
+                    build_expr(ctx, block, &expr, None, locals)
+                })
+                .collect::<Vec<_>>();
+
+                match expr.target.name.as_str() {
+                    "printLn" => {
+                        block.append_operation(func::call(
+                            ctx,
+                            FlatSymbolRefAttribute::new(ctx, "puts"),
+                            &args,
+                            &[IntegerType::new(ctx, 32).into()],
+                            Location::unknown(ctx),
+                        ));
+
+                        let k10 = block
+                            .append_operation(arith::constant(
+                                ctx,
+                                IntegerAttribute::new(10, IntegerType::new(ctx, 8).into()).into(),
+                                Location::unknown(ctx),
+                            ))
+                            .result(0)
+                            .unwrap()
+                            .into();
+                        block
+                            .append_operation(func::call(
+                                ctx,
+                                FlatSymbolRefAttribute::new(ctx, "putchar"),
+                                &[k10],
+                                &[IntegerType::new(ctx, 32).into()],
+                                Location::unknown(ctx),
+                            ))
+                            .result(0)
+                            .unwrap()
+                            .into()
+                    }
+                    _ => todo!(),
+                }
+            }
             AtomicExpr::Path(expr) => {
                 assert!(expr.extra.is_empty());
                 *locals.get(expr.first.name.as_str()).unwrap()
