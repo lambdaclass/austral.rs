@@ -21,7 +21,6 @@ use test_case::test_case;
 fn suite(path: impl AsRef<Path>) {
     let base_path = Path::new("../..").join(path);
 
-    dbg!(&base_path);
     if base_path.join("Test.aui").exists() {
         compare(base_path.join("Test.aui"), base_path.join("aui-syntax.ron"));
     }
