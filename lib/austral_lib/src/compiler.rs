@@ -1,5 +1,6 @@
 use crate::ast::{
-    AtomicExpr, Expression, FunctionDef, ModuleDecl, ModuleDef, ModuleDefItem, TypeSpec,
+    ArithExpr, AtomicExpr, CompoundExpr, Expression, FunctionDef, LetStmtTarget, ModuleDecl,
+    ModuleDef, ModuleDefItem, TypeSpec,
 };
 use melior::{
     dialect::{arith, func},
@@ -10,7 +11,7 @@ use melior::{
     },
     Context,
 };
-use std::{borrow::Cow, ops::Deref};
+use std::{borrow::Cow, collections::HashMap, ops::Deref};
 
 pub struct BuildContext<'c> {
     context: &'c Context,
@@ -48,34 +49,41 @@ pub fn compile<'c>(
 fn compile_function(ctx: &BuildContext<'_>, root: &FunctionDef) {
     let region = Region::new();
 
-    let block = region.append_block(Block::new(&[]));
-    for stmt in &root.body {
-        match stmt {
-            crate::ast::Statement::Discard(expr) => {
-                let _expr = process_expr(expr);
-                build_expr(ctx, &block, expr);
-            }
-            crate::ast::Statement::Return(expr) => {
-                let expr = process_expr(expr);
-                let value = build_expr(ctx, &block, &expr);
-                block.append_operation(func::r#return(&[value], Location::unknown(ctx)));
-            }
-            _ => todo!(),
-        }
-    }
-
     let arg_types = root
         .params
         .iter()
         .map(|_param| todo!())
         .collect::<Vec<Type>>();
-    let ret_type = match &root.ret_type {
-        TypeSpec::Simple { name } => match name.name.as_str() {
-            "ExitCode" => IntegerType::new(ctx, 32).into(),
+    let ret_type = build_type(ctx, &root.ret_type);
+
+    let block = region.append_block(Block::new(&[]));
+    let mut locals = HashMap::new();
+
+    for stmt in &root.body {
+        match stmt {
+            crate::ast::Statement::Let(stmt) => {
+                let expr = process_expr(&stmt.value);
+                match &stmt.target {
+                    LetStmtTarget::Simple { name, r#type } => {
+                        let value =
+                            build_expr(ctx, &block, &expr, Some(build_type(ctx, r#type)), &locals);
+                        locals.insert(name.name.as_str(), value);
+                    }
+                    LetStmtTarget::Destructure(_) => todo!(),
+                }
+            }
+            crate::ast::Statement::Discard(expr) => {
+                let expr = process_expr(expr);
+                build_expr(ctx, &block, &expr, None, &locals);
+            }
+            crate::ast::Statement::Return(expr) => {
+                let expr = process_expr(expr);
+                let value = build_expr(ctx, &block, &expr, Some(ret_type), &locals);
+                block.append_operation(func::r#return(&[value], Location::unknown(ctx)));
+            }
             _ => todo!(),
-        },
-        _ => todo!(),
-    };
+        }
+    }
 
     ctx.module.body().append_operation(func::func(
         ctx,
@@ -99,24 +107,59 @@ fn process_expr(expr: &Expression) -> Cow<Expression> {
     Cow::Borrowed(expr)
 }
 
+fn build_type<'c>(ctx: &'c BuildContext<'c>, r#type: &TypeSpec) -> Type<'c> {
+    match r#type {
+        TypeSpec::Simple { name } => match name.name.as_str() {
+            "Int8" => IntegerType::new(ctx, 8).into(),
+            "ExitCode" => IntegerType::new(ctx, 32).into(),
+            _ => todo!(),
+        },
+        _ => todo!(),
+    }
+}
+
 fn build_expr<'c, 'b>(
     ctx: &'c BuildContext<'c>,
     block: &'b Block<'c>,
     expr: &Expression,
+
+    target_type: Option<Type<'c>>,
+    locals: &HashMap<&str, Value<'c, 'b>>,
 ) -> Value<'c, 'b> {
     match expr {
         Expression::Atomic(expr) => match expr {
             AtomicExpr::ConstInt(value) => block
                 .append_operation(arith::constant(
                     ctx,
-                    IntegerAttribute::new(*value as i64, IntegerType::new(ctx, 32).into()).into(),
+                    IntegerAttribute::new(*value as i64, target_type.unwrap()).into(),
                     Location::unknown(ctx),
                 ))
                 .result(0)
                 .unwrap()
                 .into(),
+            AtomicExpr::Path(expr) => {
+                assert!(expr.extra.is_empty());
+                *locals.get(expr.first.name.as_str()).unwrap()
+            }
             _ => todo!(),
         },
-        Expression::Compound(_) => todo!(),
+        Expression::Compound(expr) => match expr {
+            CompoundExpr::Arith(expr) => match expr {
+                ArithExpr::Add(lhs, rhs) => {
+                    let lhs = process_expr(&Expression::Atomic(lhs.clone())).into_owned();
+                    let rhs = process_expr(&Expression::Atomic(rhs.clone())).into_owned();
+                    let lhs_value = build_expr(ctx, block, &lhs, target_type, locals);
+                    let rhs_value = build_expr(ctx, block, &rhs, target_type, locals);
+
+                    block
+                        .append_operation(arith::addi(lhs_value, rhs_value, Location::unknown(ctx)))
+                        .result(0)
+                        .unwrap()
+                        .into()
+                }
+                _ => todo!(),
+            },
+            _ => todo!(),
+        },
     }
 }
