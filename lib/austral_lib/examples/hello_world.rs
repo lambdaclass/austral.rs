@@ -7,7 +7,8 @@ fn main() {
             .map(|(token, _span)| token)
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
-    let ast = ModuleDef::parser().parse(&tokens).into_result().unwrap();
+    dbg!(&tokens);
 
-    dbg!(ast);
+    let ast = ModuleDef::parser().parse(&tokens).into_result().unwrap();
+    dbg!(&ast);
 }

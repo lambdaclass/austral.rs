@@ -1,6 +1,6 @@
 use super::{
-    ConstantDecl, ConstantDef, DocString, FunctionDecl, FunctionDef, ImportStmt, InstanceDecl,
-    InstanceDef, RecordDecl, TypeClassDecl, TypeClassDef, TypeDecl, UnionDecl,
+    ConstantDecl, ConstantDef, DocString, Extra, FunctionDecl, FunctionDef, Ident, ImportStmt,
+    InstanceDecl, InstanceDef, RecordDecl, TypeClassDecl, TypeClassDef, TypeDecl, UnionDecl,
 };
 use crate::lexer::Token;
 use chumsky::prelude::*;
@@ -16,7 +16,7 @@ pub enum Module {
 }
 
 impl Module {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             ModuleDecl::parser().map(Self::Decl),
             ModuleDef::parser().map(Self::Def),
@@ -28,34 +28,53 @@ impl Module {
 pub struct ModuleBase<TModuleItem> {
     pub doc_string: Option<DocString>,
     pub imports: Vec<ImportStmt>,
+    pub name: Ident,
     pub contents: Vec<TModuleItem>,
 }
 
 impl ModuleBase<ModuleDeclItem> {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             ImportStmt::parser().repeated().collect(),
+            just(Token::Module)
+                .ignore_then(Ident::parser())
+                .then_ignore(just(Token::Is)),
             ModuleDeclItem::parser().repeated().collect(),
         ))
-        .map(|(doc_string, imports, contents)| Self {
+        .then_ignore(just(Token::End))
+        .then_ignore(just(Token::Module))
+        .then_ignore(just(Token::Period))
+        .then_ignore(end())
+        .map(|(doc_string, imports, name, contents)| Self {
             doc_string,
             imports,
+            name,
             contents,
         })
     }
 }
 
 impl ModuleBase<ModuleDefItem> {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             ImportStmt::parser().repeated().collect(),
+            just(Token::Module)
+                .ignore_then(just(Token::Body))
+                .ignore_then(Ident::parser())
+                .then_ignore(just(Token::Is)),
             ModuleDefItem::parser().repeated().collect(),
         ))
-        .map(|(doc_string, imports, contents)| Self {
+        .then_ignore(just(Token::End))
+        .then_ignore(just(Token::Module))
+        .then_ignore(just(Token::Body))
+        .then_ignore(just(Token::Period))
+        .then_ignore(end())
+        .map(|(doc_string, imports, name, contents)| Self {
             doc_string,
             imports,
+            name,
             contents,
         })
     }
@@ -73,7 +92,7 @@ pub enum ModuleDeclItem {
 }
 
 impl ModuleDeclItem {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             ConstantDecl::parser().map(Self::Constant),
             FunctionDecl::parser().map(Self::Function),
@@ -98,7 +117,7 @@ pub enum ModuleDefItem {
 }
 
 impl ModuleDefItem {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             ConstantDef::parser().map(Self::Constant),
             FunctionDef::parser().map(Self::Function),

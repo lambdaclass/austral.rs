@@ -1,4 +1,4 @@
-use super::{DocString, Ident, Pragma, Slot, TypeParam};
+use super::{DocString, Extra, Ident, Pragma, Slot, TypeParam};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub struct UnionDecl {
 }
 
 impl UnionDecl {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             Pragma::parser().repeated().collect::<Vec<_>>(),
@@ -50,7 +50,7 @@ pub struct Case {
 }
 
 impl Case {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             just(Token::Case).ignore_then(Ident::parser()),

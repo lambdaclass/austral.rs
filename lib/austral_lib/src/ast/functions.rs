@@ -1,4 +1,4 @@
-use super::{DocString, Ident, Pragma, Statement, TypeParam, TypeSpec};
+use super::{DocString, Extra, Ident, Pragma, Statement, TypeParam, TypeSpec};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ pub struct FunctionDecl {
 }
 
 impl FunctionDecl {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             Pragma::parser().repeated().collect::<Vec<_>>(),
@@ -60,7 +60,7 @@ pub struct FunctionDef {
 }
 
 impl FunctionDef {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             Pragma::parser().repeated().collect::<Vec<_>>(),
@@ -128,7 +128,7 @@ pub struct MethodDecl {
 }
 
 impl MethodDecl {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             just(Token::Generic)
@@ -168,7 +168,7 @@ pub struct MethodDef {
 }
 
 impl MethodDef {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             just(Token::Generic)
@@ -230,7 +230,7 @@ pub struct Param {
 }
 
 impl Param {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         Ident::parser()
             .then_ignore(just(Token::Colon))
             .then(TypeSpec::parser())

@@ -1,31 +1,18 @@
-use super::{Expression, Ident, PathExpr, TypeSpec};
+use super::{Expression, Extra, Ident, PathExpr, TypeSpec};
 use crate::lexer::Token;
 use chumsky::{prelude::*, recursive::Indirect};
 use serde::{Deserialize, Serialize};
 use std::{cell::OnceCell, ops::Range, rc::Rc};
 
+#[derive(Default)]
 struct ParserCache<'a, 'b> {
-    statement: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], Statement, extra::Default>>>,
-    borrow_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], BorrowStmt, extra::Default>>>,
-    case_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CaseStmt, extra::Default>>>,
-    case_when: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CaseWhen, extra::Default>>>,
-    for_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], ForStmt, extra::Default>>>,
-    if_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], IfStmt, extra::Default>>>,
-    while_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], WhileStmt, extra::Default>>>,
-}
-
-impl<'a, 'b> Default for ParserCache<'a, 'b> {
-    fn default() -> Self {
-        Self {
-            statement: Default::default(),
-            borrow_stmt: Default::default(),
-            case_stmt: Default::default(),
-            case_when: Default::default(),
-            for_stmt: Default::default(),
-            if_stmt: Default::default(),
-            while_stmt: Default::default(),
-        }
-    }
+    statement: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], Statement, Extra<'a>>>>,
+    borrow_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], BorrowStmt, Extra<'a>>>>,
+    case_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CaseStmt, Extra<'a>>>>,
+    case_when: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CaseWhen, Extra<'a>>>>,
+    for_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], ForStmt, Extra<'a>>>>,
+    if_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], IfStmt, Extra<'a>>>>,
+    while_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], WhileStmt, Extra<'a>>>>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -42,14 +29,14 @@ pub enum Statement {
 }
 
 impl Statement {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.statement.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -85,7 +72,7 @@ pub struct AssignStmt {
 }
 
 impl AssignStmt {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         PathExpr::parser()
             .then_ignore(just(Token::Assign))
             .then(Expression::parser())
@@ -106,14 +93,14 @@ pub struct BorrowStmt {
 }
 
 impl BorrowStmt {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.borrow_stmt.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -160,14 +147,14 @@ pub struct CaseStmt {
 }
 
 impl CaseStmt {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.case_stmt.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -202,14 +189,14 @@ pub struct CaseWhen {
 }
 
 impl CaseWhen {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.case_when.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -250,14 +237,14 @@ pub struct ForStmt {
 }
 
 impl ForStmt {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.for_stmt.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -299,14 +286,14 @@ pub struct IfStmt {
 }
 
 impl IfStmt {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.if_stmt.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -354,7 +341,7 @@ pub struct LetStmt {
 }
 
 impl LetStmt {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             choice((just(Token::Let).to(false), just(Token::Var).to(true))),
             LetStmtTarget::parser(),
@@ -376,7 +363,7 @@ pub enum LetStmtTarget {
 }
 
 impl LetStmtTarget {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             Ident::parser()
                 .then_ignore(just(Token::Colon))
@@ -399,14 +386,14 @@ pub struct WhileStmt {
 }
 
 impl WhileStmt {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.while_stmt.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -441,7 +428,7 @@ pub enum BorrowMutMode {
 }
 
 impl BorrowMutMode {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             just(Token::BorrowRead).to(Self::Read),
             just(Token::BorrowWrite).to(Self::Write),
@@ -457,7 +444,7 @@ pub enum BorrowMode {
 }
 
 impl BorrowMode {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             just(Token::BorrowRead).to(Self::Read),
             just(Token::BorrowWrite).to(Self::Write),
@@ -474,7 +461,7 @@ pub struct Binding {
 }
 
 impl Binding {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             Ident::parser(),
             just(Token::As).ignore_then(Ident::parser()).or_not(),

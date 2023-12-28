@@ -1,4 +1,4 @@
-use super::{DocString, Ident, Pragma, Universe};
+use super::{DocString, Ident, Pragma, Universe, Extra};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,7 @@ pub struct TypeDecl {
 }
 
 impl TypeDecl {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             Pragma::parser().repeated().collect::<Vec<_>>(),
@@ -58,7 +58,7 @@ pub enum TypeSpec {
 }
 
 impl TypeSpec {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         recursive(|parser| {
             choice((
                 Ident::parser()
