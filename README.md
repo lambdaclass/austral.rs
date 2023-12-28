@@ -15,7 +15,7 @@ It will install all the required dependencies.
 To compile the project you need to first export some environment variables.
 Look at the [env-macos.sh script](env-macos.sh) to see what is needed. Then if you are in using Mac:
 ```bash
-sh env-macos.sh
+source env-macos.sh
 ```
 After that, `cargo build --all` should work.
 
