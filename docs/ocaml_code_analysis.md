@@ -26,7 +26,7 @@ The flow for `austral compile file.aum` ([BodyModuleSource](#module-source-types
         1. `Compiler.parse_and_combine` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/Compiler.ml#L68): [Parsing, Lexing and Combining](#parsing-lexing-and-combining) 
         1. `ReturnCheck.check_ends_in_return` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/ReturnCheck.ml#L69): [Return check](#return-check)
         1. `DesugaringPass.desugar` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/DesugaringPass.ml#L30)
-        1. `ExtractionPass.extract` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/ExtractionPass.ml#L201)
+        1. `ExtractionPass.extract` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/ExtractionPass.ml#L201): [Extraction pass](#extraction-pass)
         1. `TypingPass.augment_module` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/TypingPass.ml#L663)
         1. `LinearityCheck.check_module_linearity` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/LinearityCheck.ml#L758): Receives the TAST.
         1. `BodyExtractionPass.extract_bodies` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/BodyExtractionPass.ml#L10)
@@ -69,3 +69,9 @@ It bypasses the check for the rest of the types.
 
 It recursively goes through for each declaration, calling the `ends_in_return` function.
 For details, see [here](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/ReturnCheck.ml#L33).
+
+### Extraction Pass
+
+It adds the following to the Environment:
+- The input module to the module table. [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/ExtractionPass.ml#L243).
+- The module declarations `C*` (e.g. `CFunction`, `CUnion`, etc.) to the declarations table. [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/ExtractionPass.ml#L248).
