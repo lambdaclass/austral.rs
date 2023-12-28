@@ -101,11 +101,11 @@ impl AtomicExpr {
                     literal_u64().map(Self::ConstInt),
                     literal_f64().map(Self::ConstFloat),
                     literal_str().map(Cow::into_owned).map(Self::ConstStr),
+                    FnCallExpr::recursive_parser(cache.clone()).map(Self::FnCall),
                     PathExpr::recursive_parser(cache.clone()).map(Self::Path),
                     PathExpr::recursive_parser(cache.clone())
                         .delimited_by(just(Token::RefTransform), just(Token::RParen))
                         .map(Self::RefPath),
-                    FnCallExpr::recursive_parser(cache.clone()).map(Self::FnCall),
                     Expression::recursive_parser(cache.clone())
                         .boxed()
                         .delimited_by(just(Token::LParen), just(Token::RParen))
