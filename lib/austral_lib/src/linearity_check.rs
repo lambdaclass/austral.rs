@@ -1,4 +1,10 @@
-use crate::{r#type::{Ty, Universe}, span::Span, stages::TStmt, type_system::type_universe, common::Identifier};
+use crate::{
+    common::Identifier,
+    r#type::{Ty, Universe},
+    span::Span,
+    stages::TStmt,
+    type_system::type_universe,
+};
 use std::collections::HashMap;
 
 #[derive(Debug, Default)]
@@ -9,7 +15,9 @@ pub struct Appearances {
     pub path: i32,
 }
 
+#[derive(Default, Clone, PartialEq)]
 pub enum VarState {
+    #[default]
     Unconsumed,
     BorrowedRead,
     BorrowedWrite,
@@ -47,18 +55,14 @@ impl Partitions {
     }
 }
 
-pub fn partitions_are_consistent(stmt_name: &str, a: Partitions, b: Partitions) -> bool {
-    match (a, b) {
-        (Partitions::Zero, Partitions::Zero) => true,
-        (Partitions::One, Partitions::One) => true,
-        (Partitions::MoreThanOne, Partitions::MoreThanOne) => true,
-        _ => false,
-    }
-}
-
 pub type StateTable = HashMap<Identifier, (i32, VarState)>;
 
-fn check_statement(stmt_name: &str, state_table: &mut StateTable, stmt: &TStmt, depth: i32) -> bool {
+fn check_statement(
+    stmt_name: &str,
+    state_table: &mut StateTable,
+    stmt: &TStmt,
+    depth: i32,
+) -> bool {
     match stmt {
         TStmt::TSkip(_) => true,
         TStmt::TLet(_, name, expr, _, ty, body) => {
@@ -107,18 +111,19 @@ fn check_statement(stmt_name: &str, state_table: &mut StateTable, stmt: &TStmt, 
             let then_result = check_statement(stmt_name, &mut then_table, then_stmt, depth);
             let else_result = check_statement(stmt_name, &mut else_table, else_stmt, depth);
             *state_table = then_table;
-            cond_result && then_result && else_result && then_table == else_table
-        },
+            cond_result && then_result && else_result && *state_table == else_table
+        }
         TStmt::TCase(_, _, _, _) => {
-        },
+            todo!()
+        }
         TStmt::TWhile(_, cond, body) => {
             //check_expression(state_table, depth, cond) &&
             check_statement(stmt_name, state_table, stmt, depth + 1)
-        },
+        }
         TStmt::TFor(_, _, start, end, body) => {
             //check_expression(state_table, depth, start) &&
             //check_expression(state_table, depth, final) &&
             check_statement(stmt_name, state_table, stmt, depth + 1)
-        },
+        }
     }
 }
