@@ -1,5 +1,5 @@
 use super::{
-    ConstantDecl, ConstantDef, DocString, Extra, FunctionDecl, FunctionDef, ImportStmt,
+    ConstantDecl, ConstantDef, DocString, Extra, FunctionDecl, FunctionDef, Ident, ImportStmt,
     InstanceDecl, InstanceDef, RecordDecl, TypeClassDecl, TypeClassDef, TypeDecl, UnionDecl,
 };
 use crate::lexer::Token;
@@ -28,6 +28,7 @@ impl Module {
 pub struct ModuleBase<TModuleItem> {
     pub doc_string: Option<DocString>,
     pub imports: Vec<ImportStmt>,
+    pub name: Ident,
     pub contents: Vec<TModuleItem>,
 }
 
@@ -36,11 +37,15 @@ impl ModuleBase<ModuleDeclItem> {
         group((
             DocString::parser().or_not(),
             ImportStmt::parser().repeated().collect(),
+            just(Token::Module)
+                .ignore_then(Ident::parser())
+                .then_ignore(just(Token::Is)),
             ModuleDeclItem::parser().repeated().collect(),
         ))
-        .map(|(doc_string, imports, contents)| Self {
+        .map(|(doc_string, imports, name, contents)| Self {
             doc_string,
             imports,
+            name,
             contents,
         })
     }
@@ -51,11 +56,16 @@ impl ModuleBase<ModuleDefItem> {
         group((
             DocString::parser().or_not(),
             ImportStmt::parser().repeated().collect(),
+            just(Token::Module)
+                .ignore_then(just(Token::Body))
+                .ignore_then(Ident::parser())
+                .then_ignore(just(Token::Is)),
             ModuleDefItem::parser().repeated().collect(),
         ))
-        .map(|(doc_string, imports, contents)| Self {
+        .map(|(doc_string, imports, name, contents)| Self {
             doc_string,
             imports,
+            name,
             contents,
         })
     }
