@@ -495,7 +495,10 @@ mod statement_parser_tests {
                 first: Ident::new("foo"),
                 extra: vec![],
             },
-            value: Expression::Atomic(AtomicExpr::Variable(Ident::new("bar"))),
+            value: Expression::Atomic(AtomicExpr::Path(PathExpr {
+                first: Ident::new("bar"),
+                extra: vec![],
+            })),
         });
 
         let actual = Statement::parser().parse(&input).unwrap();
@@ -508,7 +511,10 @@ mod statement_parser_tests {
         let input = vec![Token::Return, Token::Ident("foo"), Token::Semi];
 
         let expected =
-            Statement::Return(Expression::Atomic(AtomicExpr::Variable(Ident::new("foo"))));
+            Statement::Return(Expression::Atomic(AtomicExpr::Path(PathExpr {
+                first: Ident::new("foo"),
+                extra: vec![],
+            })));
 
         let actual = Statement::parser().parse(&input).unwrap();
 
@@ -519,8 +525,10 @@ mod statement_parser_tests {
     fn test_discard_stmt() {
         let input = vec![Token::Ident("foo"), Token::Semi];
 
-        let expected =
-            Statement::Discard(Expression::Atomic(AtomicExpr::Variable(Ident::new("foo"))));
+        let expected = Statement::Discard(Expression::Atomic(AtomicExpr::Path(PathExpr {
+            first: Ident::new("foo"),
+            extra: vec![],
+        })));
 
         let actual = Statement::parser().parse(&input).unwrap();
 
@@ -547,7 +555,10 @@ mod statement_parser_tests {
                     name: Ident::new("bar"),
                 },
             },
-            value: Expression::Atomic(AtomicExpr::Variable(Ident::new("baz"))),
+            value: Expression::Atomic(AtomicExpr::Path(PathExpr {
+                first: Ident::new("baz"),
+                extra: vec![],
+            })),
         });
 
         let actual = Statement::parser().parse(&input).unwrap();

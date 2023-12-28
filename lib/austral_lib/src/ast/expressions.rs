@@ -66,10 +66,9 @@ pub enum AtomicExpr {
     ConstFloat(f64),
     ConstStr(String),
 
+    FnCall(FnCallExpr),
     Path(PathExpr),
     RefPath(PathExpr),
-    Variable(Ident),
-    FnCall(FnCallExpr),
     Paren(Box<Expression>),
     Intrinsic(IntrinExpr),
 
@@ -107,7 +106,6 @@ impl AtomicExpr {
                         .delimited_by(just(Token::RefTransform), just(Token::RParen))
                         .map(Self::RefPath),
                     FnCallExpr::recursive_parser(cache.clone()).map(Self::FnCall),
-                    Ident::parser().map(Self::Variable),
                     Expression::recursive_parser(cache.clone())
                         .boxed()
                         .delimited_by(just(Token::LParen), just(Token::RParen))
@@ -431,7 +429,6 @@ impl PathExpr {
                         .then(
                             PathSegment::recursive_parser(cache.clone())
                                 .repeated()
-                                .at_least(1)
                                 .collect::<Vec<_>>(),
                         )
                         .map(|(first, extra)| Self { first, extra }),
@@ -694,9 +691,12 @@ mod expressions_parser_tests {
             FnCallExpr::parser().parse(&fn_call).unwrap(),
             FnCallExpr {
                 target: Ident::new("foo"),
-                args: FnCallArgs::Positional(vec![Expression::Atomic(AtomicExpr::Variable(
-                    Ident::new("bar")
-                ))])
+                args: FnCallArgs::Positional(vec![Expression::Atomic(
+                    AtomicExpr::Path(PathExpr {
+                        first: Ident::new("bar"),
+                        extra: vec![]
+                    })
+                )])
             }
         );
     }
