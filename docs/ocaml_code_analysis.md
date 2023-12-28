@@ -27,7 +27,7 @@ The flow for `austral compile file.aum` ([BodyModuleSource](#module-source-types
         1. `ReturnCheck.check_ends_in_return` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/ReturnCheck.ml#L69): [Return check](#return-check)
         1. `DesugaringPass.desugar` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/DesugaringPass.ml#L30)
         1. `ExtractionPass.extract` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/ExtractionPass.ml#L201): [Extraction pass](#extraction-pass)
-        1. `TypingPass.augment_module` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/TypingPass.ml#L663)
+        1. `TypingPass.augment_module` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/TypingPass.ml#L663): Receives the AST and converts it to a TAST.
         1. `LinearityCheck.check_module_linearity` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/LinearityCheck.ml#L758): Receives the TAST.
         1. `BodyExtractionPass.extract_bodies` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/BodyExtractionPass.ml#L10)
         1. `Monomorphize.monomorphize` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/Monomorphize.ml#L522): Resolves generic functions
