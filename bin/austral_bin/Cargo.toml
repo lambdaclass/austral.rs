@@ -9,3 +9,4 @@ edition = "2021"
 austral_lib = { path = "../../lib/austral_lib" }
 chumsky = "1.0.0-alpha.6"
 clap = {version = "4.4.11", features = ["derive"]}
+melior = { version = "0.15.0" }

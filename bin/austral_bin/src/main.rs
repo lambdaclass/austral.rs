@@ -1,6 +1,7 @@
 use austral_lib::ast::ModuleDef;
 use chumsky::Parser as _;
 use clap::Parser;
+use melior::{Context, dialect::DialectRegistry};
 use std::fs;
 
 #[derive(Parser, Debug)]
@@ -45,5 +46,24 @@ fn main() {
 
     if args.print_ast {
         println!("{ast:#?}");
+        return;
     }
+
+    let context = Context::new();
+    context.append_dialect_registry(&{
+        let dialect_registry = DialectRegistry::new();
+        melior::utility::register_all_dialects(&dialect_registry);
+        dialect_registry
+    });
+    context.load_all_available_dialects();
+
+    let compiled_module = austral_lib::compiler::compile(&context, &ast, &[]);
+
+    if args.emit_mlir {
+        let mlir_code = compiled_module.as_operation();
+        println!("{mlir_code}");
+    }
+
+
+
 }
