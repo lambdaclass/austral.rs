@@ -1,5 +1,6 @@
 use crate::common::Identifier;
 
+#[derive(PartialEq, Eq)]
 pub enum Universe {
     FreeUniverse,
     LinearUniverse,

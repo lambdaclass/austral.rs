@@ -70,9 +70,10 @@ fn check_statement(
             debug_assert!(!state_table.contains_key(name));
             // TODO: Implement check_expression
             //check_expression(stmt_name, state_table, depth, expr);
-            if matches!(type_universe(ty), Universe::LinearUniverse) {
+            if type_universe(ty) == Universe::LinearUniverse {
                 state_table.insert(name.clone(), (depth, VarState::Unconsumed));
                 let result = check_statement(stmt_name, state_table, body, depth);
+                // the body extends until the end of the block (scope)
                 state_table.remove(name);
                 result
             } else {
