@@ -86,9 +86,8 @@ pub fn check_statement(state_table: &mut StateTable, stmt: &TStmt, depth: i32) -
         TStmt::TDiscarding(..) => {
             panic!("TODO: Implement check_statement for TDiscarding")
         }
-        TStmt::TReturn(..) => {
-            //check_expression(state_table, depth, expr) &&
-            state_table.is_empty()
+        TStmt::TReturn(_, expr) => {
+            check_expression(state_table, depth, expr) && state_table.is_empty()
         }
         TStmt::TLetTmp(..) => {
             panic!("TODO: Implement check_statement for TLetTmp")
@@ -148,10 +147,13 @@ mod test {
             Box::new(TExpr::TIntConstant("1".to_string())),
             Mutability::Immutable,
             Ty::SpanMut(Box::new(Ty::Boolean), Box::new(Ty::Boolean)),
-            Box::new(TStmt::TSkip(Span::default())),
+            Box::new(TStmt::TReturn(
+                Span::default(),
+                Box::new(TExpr::TIntConstant("1".to_string())),
+            )),
         );
         let result = check_statement(&mut state_table, &stmt, 0);
-        assert!(result);
+        assert!(!result);
     }
 
     #[should_panic]
