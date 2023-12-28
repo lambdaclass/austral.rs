@@ -1,4 +1,4 @@
-use super::{DocString, Ident, MethodDecl, MethodDef, Pragma, TypeParam};
+use super::{DocString, Ident, MethodDecl, MethodDef, Pragma, TypeParam, Extra};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -17,7 +17,7 @@ pub struct TypeClassBase<TMethod> {
 }
 
 impl TypeClassBase<MethodDecl> {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             Pragma::parser().repeated().collect::<Vec<_>>(),
@@ -39,7 +39,7 @@ impl TypeClassBase<MethodDecl> {
 }
 
 impl TypeClassBase<MethodDef> {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             Pragma::parser().repeated().collect::<Vec<_>>(),

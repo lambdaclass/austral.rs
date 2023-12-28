@@ -19,6 +19,10 @@ pub use self::{
     types::{TypeDecl, TypeSpec},
     unions::{Case, UnionDecl},
 };
+use crate::lexer::Token;
+use chumsky::{error, extra};
+
+type Extra<'a> = extra::Err<error::Rich<'a, Token<'a>>>;
 
 mod common;
 mod constants;
