@@ -129,6 +129,7 @@ fn check_expression(_state_table: &mut StateTable, _depth: i32, _texpr: &TExpr) 
 
 #[cfg(test)]
 mod test {
+    use crate::linearity_check::VarState;
     use crate::span::Span;
     use crate::{
         common::{Identifier, Mutability},
@@ -136,8 +137,8 @@ mod test {
         r#type::Ty,
         stages::{TExpr, TStmt},
     };
-
     use std::collections::HashMap;
+
     #[test]
     fn test_let() {
         let mut state_table = HashMap::new();
@@ -151,5 +152,21 @@ mod test {
         );
         let result = check_statement(&mut state_table, &stmt, 0);
         assert!(result);
+    }
+
+    #[should_panic]
+    #[test]
+    fn test_let_hash_with_values() {
+        let mut state_table = HashMap::new();
+        state_table.insert(Identifier(String::from("x")), (0_i32, VarState::default()));
+        let stmt = TStmt::TLet(
+            Span::default(),
+            Identifier::new("x"),
+            Box::new(TExpr::TIntConstant("1".to_string())),
+            Mutability::Immutable,
+            Ty::SpanMut(Box::new(Ty::Boolean), Box::new(Ty::Boolean)),
+            Box::new(TStmt::TSkip(Span::default())),
+        );
+        let _result = check_statement(&mut state_table, &stmt, 0);
     }
 }

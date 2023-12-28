@@ -9,7 +9,7 @@ pub enum BorrowingMode {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct Identifier(String);
+pub struct Identifier(pub String);
 
 impl Identifier {
     pub fn new(s: &str) -> Self {
@@ -24,7 +24,7 @@ pub struct QIdent {
 }
 
 #[derive(Clone, Debug)]
-pub struct ModuleName(String);
+pub struct ModuleName(pub String);
 
 #[derive(Clone, Debug)]
 pub struct DeclId(i32);
