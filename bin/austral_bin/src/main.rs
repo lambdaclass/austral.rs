@@ -2,7 +2,12 @@ use austral_lib::ast::ModuleDef;
 use chumsky::Parser as _;
 use clap::Parser;
 use melior::{dialect::DialectRegistry, Context};
-use std::fs;
+use std::{
+    fmt::format,
+    fs,
+    process::{Command, Stdio},
+    thread::spawn,
+};
 
 #[derive(Parser, Debug)]
 #[clap(name = "austral", about = "Austral compiler")]
@@ -68,10 +73,20 @@ fn main() {
     if args.emit_llvm {
         austral_lib::compiler::run_pass_manager(&context, &mut compiled_module).unwrap();
         let optimized_code = compiled_module.as_operation();
-        println!("{optimized_code}");
+
+        let echo = Command::new("echo")
+            .arg(&format!("{}", optimized_code))
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let mlir_traslate = Command::new("/opt/homebrew/opt/llvm/bin/mlir-translate")
+            .args(["--mlir-to-llvmir", "-"])
+            .stdin(Stdio::from(echo.stdout.unwrap()))
+            .spawn();
+
+        let output = mlir_traslate.unwrap().wait_with_output().unwrap();
+        println!("{}", String::from_utf8_lossy(&output.stdout));
         return;
     }
 }
-
-
-// "$MLIR_SYS_170_PREFIX/bin/mlir-translate" --mlir-to-llvmir "$OUTPUT_DIR/$base_name.opt.mlir" -o "$OUTPUT_DIR/$base_name.ll" >> /dev/stderr
