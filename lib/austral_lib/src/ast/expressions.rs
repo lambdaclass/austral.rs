@@ -573,7 +573,13 @@ impl FnCallArgs {
                             .separated_by(just(Token::Comma))
                             .allow_trailing()
                             .collect::<HashMap<_, _>>()
-                            .map(Self::Named),
+                            .map(|params| {
+                                if params.is_empty() {
+                                    Self::Empty
+                                } else {
+                                    Self::Named(params)
+                                }
+                            }),
                         Expression::recursive_parser(cache.clone())
                             .separated_by(just(Token::Comma))
                             .allow_trailing()
@@ -640,7 +646,7 @@ impl IntrinExpr {
 mod expressions_parser_tests {
     use super::*;
     use crate::lexer::Token;
-    use std::borrow::Cow;
+    use std::{borrow::Cow, vec};
 
     /// Test that we can parse constant expressions like:
     ///
@@ -697,6 +703,16 @@ mod expressions_parser_tests {
 
     #[test]
     fn test_fn_call_expression() {
+        let fn_call_noargs = vec![Token::Ident("foo"), Token::LParen, Token::RParen];
+
+        assert_eq!(
+            FnCallExpr::parser().parse(&fn_call_noargs).unwrap(),
+            FnCallExpr {
+                target: Ident::new("foo"),
+                args: FnCallArgs::Empty
+            }
+        );
+
         let fn_call = vec![
             Token::Ident("foo"),
             Token::LParen,
