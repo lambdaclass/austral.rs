@@ -187,7 +187,7 @@ fn count(name: &Identifier, texpr: &TExpr) -> Appearances {
 
 fn check_var_in_expr(
     state_table: &mut StateTable,
-    _depth: i32,
+    depth: i32,
     name: &Identifier,
     _ty: &Ty,
     texpr: &TExpr,
@@ -196,8 +196,7 @@ fn check_var_in_expr(
     let consumed = apps.consumed;
     let state = state_table
         .get(name)
-        .map(|x| x.1.clone())
-        .unwrap_or_default();
+        .map_or(VarState::default(), |x| x.1.clone());
 
     // Make a tuple with the variable's state, and the partitioned appearances
     let tup = (state, Partitions::partition(consumed));
@@ -205,6 +204,9 @@ fn check_var_in_expr(
     match tup {
         (_, Partitions::Zero) => true,
         (VarState::Unconsumed, Partitions::One) => {
+            if state_table.get(name) != Some(&(depth, VarState::Unconsumed)) {
+                return false;
+            }
             state_table.remove(name);
             true
         }
@@ -275,5 +277,29 @@ mod test {
         );
         let result = check_statement(&mut state_table, &stmt, 0);
         assert!(result);
+    }
+
+    #[test]
+    fn test_let_and_consumed_in_loop() {
+        let mut state_table = HashMap::new();
+        let stmt = TStmt::TLet(
+            Span::default(),
+            Identifier::new("x"),
+            Box::new(TExpr::TIntConstant("1".to_string())),
+            Mutability::Immutable,
+            Ty::SpanMut(Box::new(Ty::Boolean), Box::new(Ty::Boolean)),
+            Box::new(TStmt::TFor(
+                Span::default(),
+                Identifier::new("i"),
+                Box::new(TExpr::TIntConstant(String::from("1"))),
+                Box::new(TExpr::TIntConstant(String::from("10"))),
+                Box::new(TStmt::TReturn(
+                    Span::default(),
+                    Box::new(TExpr::TLocalVar(Identifier(String::from("x")), Ty::Boolean)),
+                )),
+            )),
+        );
+        let result = check_statement(&mut state_table, &stmt, 0);
+        assert!(!result);
     }
 }
