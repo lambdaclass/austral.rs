@@ -1,4 +1,4 @@
-use super::{DocString, Ident, Pragma, Universe, Extra};
+use super::{DocString, Extra, Ident, Pragma, Universe};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};

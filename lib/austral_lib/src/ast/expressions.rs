@@ -691,12 +691,12 @@ mod expressions_parser_tests {
             FnCallExpr::parser().parse(&fn_call).unwrap(),
             FnCallExpr {
                 target: Ident::new("foo"),
-                args: FnCallArgs::Positional(vec![Expression::Atomic(
-                    AtomicExpr::Path(PathExpr {
+                args: FnCallArgs::Positional(vec![Expression::Atomic(AtomicExpr::Path(
+                    PathExpr {
                         first: Ident::new("bar"),
                         extra: vec![]
-                    })
-                )])
+                    }
+                ))])
             }
         );
     }

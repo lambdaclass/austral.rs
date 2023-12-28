@@ -510,11 +510,10 @@ mod statement_parser_tests {
     fn test_return_stmt() {
         let input = vec![Token::Return, Token::Ident("foo"), Token::Semi];
 
-        let expected =
-            Statement::Return(Expression::Atomic(AtomicExpr::Path(PathExpr {
-                first: Ident::new("foo"),
-                extra: vec![],
-            })));
+        let expected = Statement::Return(Expression::Atomic(AtomicExpr::Path(PathExpr {
+            first: Ident::new("foo"),
+            extra: vec![],
+        })));
 
         let actual = Statement::parser().parse(&input).unwrap();
 
