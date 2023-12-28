@@ -1,9 +1,10 @@
-use super::{Expression, Ident, PathExpr, TypeSpec, Extra};
+use super::{Expression, Extra, Ident, PathExpr, TypeSpec};
 use crate::lexer::Token;
 use chumsky::{prelude::*, recursive::Indirect};
 use serde::{Deserialize, Serialize};
 use std::{cell::OnceCell, ops::Range, rc::Rc};
 
+#[derive(Default)]
 struct ParserCache<'a, 'b> {
     statement: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], Statement, Extra<'a>>>>,
     borrow_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], BorrowStmt, Extra<'a>>>>,
@@ -12,20 +13,6 @@ struct ParserCache<'a, 'b> {
     for_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], ForStmt, Extra<'a>>>>,
     if_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], IfStmt, Extra<'a>>>>,
     while_stmt: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], WhileStmt, Extra<'a>>>>,
-}
-
-impl<'a, 'b> Default for ParserCache<'a, 'b> {
-    fn default() -> Self {
-        Self {
-            statement: Default::default(),
-            borrow_stmt: Default::default(),
-            case_stmt: Default::default(),
-            case_when: Default::default(),
-            for_stmt: Default::default(),
-            if_stmt: Default::default(),
-            while_stmt: Default::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

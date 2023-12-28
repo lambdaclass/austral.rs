@@ -7,6 +7,7 @@ use chumsky::{prelude::*, recursive::Indirect};
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, cell::OnceCell, collections::HashMap, rc::Rc};
 
+#[derive(Default)]
 struct ParserCache<'a, 'b> {
     pub expression: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], Expression, Extra<'a>>>>,
     pub atomic_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], AtomicExpr, Extra<'a>>>>,
@@ -23,26 +24,6 @@ struct ParserCache<'a, 'b> {
     pub fn_call_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], FnCallExpr, Extra<'a>>>>,
     pub fn_call_args: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], FnCallArgs, Extra<'a>>>>,
     pub intrin_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], IntrinExpr, Extra<'a>>>>,
-}
-
-impl<'a, 'b> Default for ParserCache<'a, 'b> {
-    fn default() -> Self {
-        Self {
-            expression: Default::default(),
-            atomic_expr: Default::default(),
-            compound_expr: Default::default(),
-            cmp_expr: Default::default(),
-            logic_expr: Default::default(),
-            arith_expr: Default::default(),
-            select_expr: Default::default(),
-            cast_expr: Default::default(),
-            path_expr: Default::default(),
-            path_segment: Default::default(),
-            fn_call_expr: Default::default(),
-            fn_call_args: Default::default(),
-            intrin_expr: Default::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -125,8 +106,8 @@ impl AtomicExpr {
                     PathExpr::recursive_parser(cache.clone())
                         .delimited_by(just(Token::RefTransform), just(Token::RParen))
                         .map(Self::RefPath),
-                    Ident::parser().map(Self::Variable),
                     FnCallExpr::recursive_parser(cache.clone()).map(Self::FnCall),
+                    Ident::parser().map(Self::Variable),
                     Expression::recursive_parser(cache.clone())
                         .boxed()
                         .delimited_by(just(Token::LParen), just(Token::RParen))
@@ -450,6 +431,7 @@ impl PathExpr {
                         .then(
                             PathSegment::recursive_parser(cache.clone())
                                 .repeated()
+                                .at_least(1)
                                 .collect::<Vec<_>>(),
                         )
                         .map(|(first, extra)| Self { first, extra }),

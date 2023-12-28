@@ -42,6 +42,10 @@ impl ModuleBase<ModuleDeclItem> {
                 .then_ignore(just(Token::Is)),
             ModuleDeclItem::parser().repeated().collect(),
         ))
+        .then_ignore(just(Token::End))
+        .then_ignore(just(Token::Module))
+        .then_ignore(just(Token::Period))
+        .then_ignore(end())
         .map(|(doc_string, imports, name, contents)| Self {
             doc_string,
             imports,
@@ -62,6 +66,11 @@ impl ModuleBase<ModuleDefItem> {
                 .then_ignore(just(Token::Is)),
             ModuleDefItem::parser().repeated().collect(),
         ))
+        .then_ignore(just(Token::End))
+        .then_ignore(just(Token::Module))
+        .then_ignore(just(Token::Body))
+        .then_ignore(just(Token::Period))
+        .then_ignore(end())
         .map(|(doc_string, imports, name, contents)| Self {
             doc_string,
             imports,
