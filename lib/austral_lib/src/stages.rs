@@ -7,7 +7,7 @@ use crate::{
 
 pub enum TStmt {
     TSkip(Span),
-    TLet(Span, Identifier, Mutability, Ty, Box<TStmt>),
+    TLet(Span, Identifier, Box<TExpr>, Mutability, Ty, Box<TStmt>),
     TDestructure(Span, Mutability, Vec<TypedBinding>, Box<TExpr>, Box<TStmt>),
     TAssign(Span, Box<TExpr>, Box<TExpr>),
     TAssignVar(Span, QIdent, Box<TExpr>),
