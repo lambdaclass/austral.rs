@@ -13,7 +13,8 @@ use melior::{
         r#type::{FunctionType, IntegerType, MemRefType, RankedTensorType},
         Block, Identifier, Location, Module, Region, Type, Value,
     },
-    Context, Error, pass::{PassManager, self},
+    pass::{self, PassManager},
+    Context, Error,
 };
 use std::{
     borrow::Cow,
@@ -358,7 +359,6 @@ fn build_expr<'c, 'b>(
         },
     }
 }
-
 
 pub fn run_pass_manager(context: &Context, module: &mut Module) -> Result<(), Error> {
     let pass_manager = PassManager::new(context);

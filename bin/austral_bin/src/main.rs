@@ -3,10 +3,8 @@ use chumsky::Parser as _;
 use clap::Parser;
 use melior::{dialect::DialectRegistry, Context};
 use std::{
-    fmt::format,
     fs,
     process::{Command, Stdio},
-    thread::spawn,
 };
 
 #[derive(Parser, Debug)]
