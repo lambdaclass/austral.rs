@@ -187,7 +187,7 @@ fn count(name: &Identifier, texpr: &TExpr) -> Appearances {
 
 fn check_var_in_expr(
     state_table: &mut StateTable,
-    depth: i32,
+    _depth: i32,
     name: &Identifier,
     _ty: &Ty,
     texpr: &TExpr,
