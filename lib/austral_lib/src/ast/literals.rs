@@ -94,12 +94,12 @@ mod literals_parser_tests {
 
     #[test]
     fn test_literal_bool() {
-        assert_eq!(literal_bool().parse(&[Token::True]).unwrap(), true);
-        assert_eq!(literal_bool().parse(&[Token::False]).unwrap(), false);
+        assert!(literal_bool().parse(&[Token::True]).unwrap());
+        assert!(!literal_bool().parse(&[Token::False]).unwrap());
     }
 
     #[test]
     fn test_literal_nil() {
-        assert_eq!(literal_nil().parse(&[Token::Nil]).unwrap(), ());
+        literal_nil().parse(&[Token::Nil]).unwrap();
     }
 }
