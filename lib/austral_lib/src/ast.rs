@@ -7,15 +7,15 @@ pub use self::{
     },
     functions::{FunctionDecl, FunctionDef, MethodDecl, MethodDef, Param},
     imports::{ImportStmt, ImportedSymbol},
-    instances::{InstanceBase, InstanceDecl, InstanceDef},
+    instances::{InstanceDecl, InstanceDef},
     literals::{literal_bool, literal_char, literal_f64, literal_nil, literal_str, literal_u64},
-    modules::{Module, ModuleBase, ModuleDecl, ModuleDeclItem, ModuleDef, ModuleDefItem},
+    modules::{Module, ModuleDecl, ModuleDeclItem, ModuleDef, ModuleDefItem},
     records::{RecordDecl, Slot},
     statements::{
         AssignStmt, Binding, BorrowMode, BorrowMutMode, BorrowStmt, CaseStmt, CaseWhen, ForStmt,
         IfStmt, LetStmt, LetStmtTarget, Statement, WhileStmt,
     },
-    type_classes::{TypeClassBase, TypeClassDecl, TypeClassDef},
+    type_classes::{TypeClassDecl, TypeClassDef},
     types::{TypeDecl, TypeSpec},
     unions::{Case, UnionDecl},
 };
