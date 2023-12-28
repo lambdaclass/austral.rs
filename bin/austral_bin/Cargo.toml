@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 austral_lib = { path = "../../lib/austral_lib" }
+clap = "4.4.11"
