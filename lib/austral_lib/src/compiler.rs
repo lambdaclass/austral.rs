@@ -53,7 +53,7 @@ fn compile_function(ctx: &BuildContext<'_>, root: &FunctionDef) {
         match stmt {
             crate::ast::Statement::Discard(expr) => {
                 let _expr = process_expr(expr);
-                todo!()
+                build_expr(ctx, &block, expr);
             }
             crate::ast::Statement::Return(expr) => {
                 let expr = process_expr(expr);

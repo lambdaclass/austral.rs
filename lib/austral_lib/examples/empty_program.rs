@@ -19,6 +19,5 @@ fn main() {
     context.load_all_available_dialects();
 
     let prog = austral_lib::compiler::compile(&context, &ast, &[]);
-
     println!("{}", prog.as_operation());
 }
