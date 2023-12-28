@@ -2,7 +2,7 @@ use crate::{
     common::Identifier,
     r#type::{Ty, Universe},
     span::Span,
-    stages::TStmt,
+    stages::{TExpr, TStmt},
     type_system::type_universe,
 };
 use std::collections::HashMap;
@@ -57,7 +57,7 @@ impl Partitions {
 
 pub type StateTable = HashMap<Identifier, (i32, VarState)>;
 
-fn check_statement(
+pub fn check_statement(
     stmt_name: &str,
     state_table: &mut StateTable,
     stmt: &TStmt,
@@ -68,8 +68,7 @@ fn check_statement(
         TStmt::TLet(_, name, expr, _, ty, body) => {
             // This is an internal error because the compiler is expected to catch redefinitions before this.
             debug_assert!(!state_table.contains_key(name));
-            // TODO: Implement check_expression
-            //check_expression(stmt_name, state_table, depth, expr);
+            check_expression(state_table, depth, expr);
             if type_universe(ty) == Universe::LinearUniverse {
                 state_table.insert(name.clone(), (depth, VarState::Unconsumed));
                 let result = check_statement(stmt_name, state_table, body, depth);
@@ -80,8 +79,9 @@ fn check_statement(
                 check_statement(stmt_name, state_table, body, depth)
             }
         }
-        TStmt::TAssign(..) => {
-            panic!("TODO: Implement check_statement for TAssign")
+        TStmt::TAssign(_, lvalue, rvalue) => {
+            check_expression(state_table, depth, lvalue)
+                && check_expression(state_table, depth, rvalue)
         }
         TStmt::TAssignTmp(..) => {
             panic!("TODO: Implement check_statement for TAssignTmp")
@@ -122,9 +122,40 @@ fn check_statement(
             check_statement(stmt_name, state_table, stmt, depth + 1)
         }
         TStmt::TFor(_, _, start, end, body) => {
-            //check_expression(state_table, depth, start) &&
-            //check_expression(state_table, depth, final) &&
-            check_statement(stmt_name, state_table, stmt, depth + 1)
+            check_expression(state_table, depth, start)
+                && check_expression(state_table, depth, end)
+                && check_statement(stmt_name, state_table, stmt, depth + 1)
         }
+    }
+}
+
+fn check_expression(state_table: &mut StateTable, depth: i32, texpr: &TExpr) -> bool {
+    true
+}
+
+#[cfg(test)]
+mod test {
+    use crate::span::Span;
+    use crate::{
+        common::{Identifier, Mutability},
+        linearity_check::check_statement,
+        r#type::Ty,
+        stages::{TExpr, TStmt},
+    };
+
+    use std::collections::HashMap;
+    #[test]
+    fn test_let() {
+        let mut state_table = HashMap::new();
+        let stmt = TStmt::TLet(
+            Span::default(),
+            Identifier::new("x"),
+            Box::new(TExpr::TIntConstant("1".to_string())),
+            Mutability::Immutable,
+            Ty::SpanMut(Box::new(Ty::Boolean), Box::new(Ty::Boolean)),
+            Box::new(TStmt::TSkip(Span::default())),
+        );
+        let result = check_statement("test_let", &mut state_table, &stmt, 0);
+        assert!(result);
     }
 }

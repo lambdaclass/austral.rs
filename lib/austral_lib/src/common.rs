@@ -11,6 +11,12 @@ pub enum BorrowingMode {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Identifier(String);
 
+impl Identifier {
+    pub fn new(s: &str) -> Self {
+        Identifier(s.to_string())
+    }
+}
+
 pub struct QIdent {
     pub source: ModuleName,
     pub original: Identifier,
