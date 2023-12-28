@@ -19,6 +19,10 @@ sh env-macos.sh
 ```
 After that, `cargo build --all` should work.
 
+## Docs
+
+[OCaml code analysis](docs/ocaml_code_analysis.md)
+
 ## Resources
 - https://austral-lang.org/
 - https://borretti.me/article/introducing-austral
