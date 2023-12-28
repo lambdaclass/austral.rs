@@ -1,5 +1,6 @@
 use super::{
-    literal_bool, literal_char, literal_f64, literal_nil, literal_str, literal_u64, Ident, TypeSpec,
+    literal_bool, literal_char, literal_f64, literal_nil, literal_str, literal_u64, Extra, Ident,
+    TypeSpec,
 };
 use crate::lexer::Token;
 use chumsky::{prelude::*, recursive::Indirect};
@@ -7,29 +8,21 @@ use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, cell::OnceCell, collections::HashMap, rc::Rc};
 
 struct ParserCache<'a, 'b> {
-    pub expression:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], Expression, extra::Default>>>,
-    pub atomic_expr:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], AtomicExpr, extra::Default>>>,
+    pub expression: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], Expression, Extra<'a>>>>,
+    pub atomic_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], AtomicExpr, Extra<'a>>>>,
     pub compound_expr:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CompoundExpr, extra::Default>>>,
-    pub cmp_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CmpExpr, extra::Default>>>,
-    pub logic_expr:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], LogicExpr, extra::Default>>>,
-    pub arith_expr:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], ArithExpr, extra::Default>>>,
-    pub select_expr:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], SelectExpr, extra::Default>>>,
-    pub cast_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CastExpr, extra::Default>>>,
-    pub path_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], PathExpr, extra::Default>>>,
+        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CompoundExpr, Extra<'a>>>>,
+    pub cmp_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CmpExpr, Extra<'a>>>>,
+    pub logic_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], LogicExpr, Extra<'a>>>>,
+    pub arith_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], ArithExpr, Extra<'a>>>>,
+    pub select_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], SelectExpr, Extra<'a>>>>,
+    pub cast_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], CastExpr, Extra<'a>>>>,
+    pub path_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], PathExpr, Extra<'a>>>>,
     pub path_segment:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], PathSegment, extra::Default>>>,
-    pub fn_call_expr:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], FnCallExpr, extra::Default>>>,
-    pub fn_call_args:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], FnCallArgs, extra::Default>>>,
-    pub intrin_expr:
-        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], IntrinExpr, extra::Default>>>,
+        OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], PathSegment, Extra<'a>>>>,
+    pub fn_call_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], FnCallExpr, Extra<'a>>>>,
+    pub fn_call_args: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], FnCallArgs, Extra<'a>>>>,
+    pub intrin_expr: OnceCell<Recursive<Indirect<'a, 'b, &'a [Token<'a>], IntrinExpr, Extra<'a>>>>,
 }
 
 impl<'a, 'b> Default for ParserCache<'a, 'b> {
@@ -59,14 +52,14 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.expression.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -107,14 +100,14 @@ pub enum AtomicExpr {
 }
 
 impl AtomicExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.atomic_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -176,14 +169,14 @@ pub enum CompoundExpr {
 }
 
 impl CompoundExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.compound_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -214,13 +207,13 @@ pub enum CmpExpr {
 }
 
 impl CmpExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         todo()
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.cmp_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -264,14 +257,14 @@ pub enum LogicExpr {
 }
 
 impl LogicExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.logic_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -309,14 +302,14 @@ pub enum ArithExpr {
 }
 
 impl ArithExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.arith_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -359,14 +352,14 @@ pub struct SelectExpr {
 }
 
 impl SelectExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.select_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -405,14 +398,14 @@ pub struct CastExpr {
 }
 
 impl CastExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.cast_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -438,14 +431,14 @@ pub struct PathExpr {
 }
 
 impl PathExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.path_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -475,14 +468,14 @@ pub enum PathSegment {
 }
 
 impl PathSegment {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.path_segment.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -514,14 +507,14 @@ pub struct FnCallExpr {
 }
 
 impl FnCallExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.fn_call_expr.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -551,14 +544,14 @@ pub enum FnCallArgs {
 }
 
 impl FnCallArgs {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.fn_call_args.get() {
             Some(parser) => parser.clone(),
             None => {
@@ -571,11 +564,13 @@ impl FnCallArgs {
                             .then_ignore(just(Token::ArrowRight))
                             .then(Expression::recursive_parser(cache.clone()))
                             .separated_by(just(Token::Comma))
+                            .at_least(1)
                             .allow_trailing()
                             .collect::<HashMap<_, _>>()
                             .map(Self::Named),
                         Expression::recursive_parser(cache.clone())
                             .separated_by(just(Token::Comma))
+                            .at_least(1)
                             .allow_trailing()
                             .collect::<Vec<_>>()
                             .map(Self::Positional),
@@ -599,14 +594,14 @@ pub enum IntrinExpr {
 }
 
 impl IntrinExpr {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         let cache = Rc::new(ParserCache::default());
         Self::recursive_parser(cache)
     }
 
     fn recursive_parser<'a>(
         cache: Rc<ParserCache<'a, 'a>>,
-    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    ) -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         match cache.intrin_expr.get() {
             Some(parser) => parser.clone(),
             None => {

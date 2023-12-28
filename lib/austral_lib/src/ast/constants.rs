@@ -1,4 +1,4 @@
-use super::{DocString, Expression, Ident, Pragma, TypeSpec};
+use super::{DocString, Expression, Extra, Ident, Pragma, TypeSpec};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub struct ConstantDecl {
 }
 
 impl ConstantDecl {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             Pragma::parser().repeated().collect::<Vec<_>>(),
@@ -38,7 +38,7 @@ pub struct ConstantDef {
 }
 
 impl ConstantDef {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             Pragma::parser().repeated().collect::<Vec<_>>(),

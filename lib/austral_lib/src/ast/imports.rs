@@ -1,4 +1,4 @@
-use super::common::Ident;
+use super::{common::Ident, Extra};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ pub struct ImportStmt {
 }
 
 impl ImportStmt {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         just(Token::Import)
             .ignore_then(
                 Ident::parser()
@@ -37,7 +37,7 @@ pub struct ImportedSymbol {
 }
 
 impl ImportedSymbol {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         Ident::parser()
             .then(just(Token::As).ignore_then(Ident::parser()).or_not())
             .map(|(import_name, rename_into)| Self {

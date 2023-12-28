@@ -1,6 +1,6 @@
 use super::{
-    ConstantDecl, ConstantDef, DocString, FunctionDecl, FunctionDef, ImportStmt, InstanceDecl,
-    InstanceDef, RecordDecl, TypeClassDecl, TypeClassDef, TypeDecl, UnionDecl,
+    ConstantDecl, ConstantDef, DocString, Extra, FunctionDecl, FunctionDef, ImportStmt,
+    InstanceDecl, InstanceDef, RecordDecl, TypeClassDecl, TypeClassDef, TypeDecl, UnionDecl,
 };
 use crate::lexer::Token;
 use chumsky::prelude::*;
@@ -16,7 +16,7 @@ pub enum Module {
 }
 
 impl Module {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             ModuleDecl::parser().map(Self::Decl),
             ModuleDef::parser().map(Self::Def),
@@ -32,7 +32,7 @@ pub struct ModuleBase<TModuleItem> {
 }
 
 impl ModuleBase<ModuleDeclItem> {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             ImportStmt::parser().repeated().collect(),
@@ -47,7 +47,7 @@ impl ModuleBase<ModuleDeclItem> {
 }
 
 impl ModuleBase<ModuleDefItem> {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             DocString::parser().or_not(),
             ImportStmt::parser().repeated().collect(),
@@ -73,7 +73,7 @@ pub enum ModuleDeclItem {
 }
 
 impl ModuleDeclItem {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             ConstantDecl::parser().map(Self::Constant),
             FunctionDecl::parser().map(Self::Function),
@@ -98,7 +98,7 @@ pub enum ModuleDefItem {
 }
 
 impl ModuleDefItem {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         choice((
             ConstantDef::parser().map(Self::Constant),
             FunctionDef::parser().map(Self::Function),

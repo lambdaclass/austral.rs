@@ -1,4 +1,4 @@
-use super::FnCallArgs;
+use super::{Extra, FnCallArgs};
 use crate::lexer::Token;
 use chumsky::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -15,12 +15,12 @@ impl DocString {
         }
     }
 
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
-        any().try_map(|token, _| match token {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
+        any().try_map(|token, span| match token {
             Token::TripleString(contents) => Ok(Self {
                 contents: contents.to_string(),
             }),
-            _ => Err(Default::default()),
+            _ => Err(Rich::custom(span, "expected a docstring")),
         })
     }
 }
@@ -35,12 +35,12 @@ impl Ident {
         Self { name: name.into() }
     }
 
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
-        any().try_map(|token, _| match token {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
+        any().try_map(|token, span| match token {
             Token::Ident(ident) => Ok(Self {
                 name: ident.to_string(),
             }),
-            _ => Err(Default::default()),
+            _ => Err(Rich::custom(span, "expected an identifier")),
         })
     }
 }
@@ -49,10 +49,10 @@ impl Ident {
 pub struct Universe(pub crate::lexer::Universe);
 
 impl Universe {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
-        any().try_map(|token, _| match token {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
+        any().try_map(|token, span| match token {
             Token::Universe(x) => Ok(Self(x)),
-            _ => Err(Default::default()),
+            _ => Err(Rich::custom(span, "expected an universe")),
         })
     }
 }
@@ -65,7 +65,7 @@ pub struct TypeParam {
 }
 
 impl TypeParam {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         group((
             Ident::parser(),
             just(Token::Colon).ignore_then(Universe::parser()),
@@ -92,7 +92,7 @@ pub struct Pragma {
 }
 
 impl Pragma {
-    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self> {
+    pub fn parser<'a>() -> impl Clone + Parser<'a, &'a [Token<'a>], Self, Extra<'a>> {
         just(Token::Pragma)
             .ignore_then(Ident::parser())
             .then(
