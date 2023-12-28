@@ -609,3 +609,162 @@ impl IntrinExpr {
         }
     }
 }
+
+#[cfg(test)]
+mod expressions_parser_tests {
+    use super::*;
+    use crate::lexer::Token;
+    use std::{borrow::Cow, vec};
+
+    /// Test that we can parse constant expressions like:
+    ///
+    /// ConstNil,
+    /// ConstBool(bool),
+    /// ConstChar(char),
+    /// ConstInt(u64),
+    /// ConstFloat(f64),
+    /// ConstStr(String),
+    #[test]
+    fn test_const_expressions() {
+        let nil = vec![Token::Nil];
+        assert_eq!(
+            AtomicExpr::parser().parse(&nil).unwrap(),
+            AtomicExpr::ConstNil
+        );
+
+        let true_ = vec![Token::True];
+        assert_eq!(
+            AtomicExpr::parser().parse(&true_).unwrap(),
+            AtomicExpr::ConstBool(true)
+        );
+
+        let false_ = vec![Token::False];
+        assert_eq!(
+            AtomicExpr::parser().parse(&false_).unwrap(),
+            AtomicExpr::ConstBool(false)
+        );
+
+        let char_ = vec![Token::Char('a')];
+        assert_eq!(
+            AtomicExpr::parser().parse(&char_).unwrap(),
+            AtomicExpr::ConstChar('a')
+        );
+
+        let int_ = vec![Token::Decimal(10)];
+        assert_eq!(
+            AtomicExpr::parser().parse(&int_).unwrap(),
+            AtomicExpr::ConstInt(10)
+        );
+
+        let float_ = vec![Token::Float(10.0)];
+        assert_eq!(
+            AtomicExpr::parser().parse(&float_).unwrap(),
+            AtomicExpr::ConstFloat(10.0)
+        );
+
+        let str_ = vec![Token::String(Cow::Borrowed("hello world"))];
+        assert_eq!(
+            AtomicExpr::parser().parse(&str_).unwrap(),
+            AtomicExpr::ConstStr("hello world".to_string())
+        );
+    }
+
+    #[test]
+    fn test_fn_call_expression() {
+        let fn_call_noargs = vec![Token::Ident("foo"), Token::LParen, Token::RParen];
+
+        assert_eq!(
+            FnCallExpr::parser().parse(&fn_call_noargs).unwrap(),
+            FnCallExpr {
+                target: Ident::new("foo"),
+                args: FnCallArgs::Empty
+            }
+        );
+
+        let fn_call = vec![
+            Token::Ident("foo"),
+            Token::LParen,
+            Token::Ident("bar"),
+            Token::RParen,
+        ];
+        assert_eq!(
+            FnCallExpr::parser().parse(&fn_call).unwrap(),
+            FnCallExpr {
+                target: Ident::new("foo"),
+                args: FnCallArgs::Positional(vec![Expression::Atomic(
+                    AtomicExpr::Path(PathExpr {
+                        first: Ident::new("bar"),
+                        extra: vec![]
+                    })
+                )])
+            }
+        );
+    }
+
+    #[test]
+    fn test_path_expression() {
+        let path = vec![Token::Ident("foo"), Token::Period, Token::Ident("bar")];
+        assert_eq!(
+            PathExpr::parser().parse(&path).unwrap(),
+            PathExpr {
+                first: Ident::new("foo"),
+                extra: vec![PathSegment::SlotAccess(Ident::new("bar"))]
+            }
+        );
+    }
+
+    #[test]
+    fn test_arith_expression() {
+        let add_expr = vec![Token::Decimal(10), Token::Add, Token::Decimal(10)];
+
+        assert_eq!(
+            ArithExpr::parser().parse(&add_expr).unwrap(),
+            ArithExpr::Add(AtomicExpr::ConstInt(10), AtomicExpr::ConstInt(10))
+        );
+
+        let sub_expr = vec![Token::Decimal(10), Token::Sub, Token::Decimal(10)];
+
+        assert_eq!(
+            ArithExpr::parser().parse(&sub_expr).unwrap(),
+            ArithExpr::Sub(AtomicExpr::ConstInt(10), AtomicExpr::ConstInt(10))
+        );
+
+        let mul_expr = vec![Token::Decimal(10), Token::Mul, Token::Decimal(10)];
+
+        assert_eq!(
+            ArithExpr::parser().parse(&mul_expr).unwrap(),
+            ArithExpr::Mul(AtomicExpr::ConstInt(10), AtomicExpr::ConstInt(10))
+        );
+
+        let div_expr = vec![Token::Decimal(10), Token::Div, Token::Decimal(10)];
+
+        assert_eq!(
+            ArithExpr::parser().parse(&div_expr).unwrap(),
+            ArithExpr::Div(AtomicExpr::ConstInt(10), AtomicExpr::ConstInt(10))
+        );
+    }
+
+    #[test]
+    fn test_logical_expressions() {
+        let and_expr = vec![Token::True, Token::And, Token::False];
+
+        assert_eq!(
+            LogicExpr::parser().parse(&and_expr).unwrap(),
+            LogicExpr::And(AtomicExpr::ConstBool(true), AtomicExpr::ConstBool(false))
+        );
+
+        let or_expr = vec![Token::True, Token::Or, Token::False];
+
+        assert_eq!(
+            LogicExpr::parser().parse(&or_expr).unwrap(),
+            LogicExpr::Or(AtomicExpr::ConstBool(true), AtomicExpr::ConstBool(false))
+        );
+
+        let not_expr = vec![Token::Not, Token::True];
+
+        assert_eq!(
+            LogicExpr::parser().parse(&not_expr).unwrap(),
+            LogicExpr::Not(AtomicExpr::ConstBool(true))
+        );
+    }
+}

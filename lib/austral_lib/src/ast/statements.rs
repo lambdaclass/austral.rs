@@ -474,3 +474,95 @@ impl Binding {
         })
     }
 }
+
+#[cfg(test)]
+mod statement_parser_tests {
+    use super::*;
+    use crate::{ast::AtomicExpr, lexer::Token};
+    use std::vec;
+
+    #[test]
+    fn test_assign_stmt() {
+        let input = vec![
+            Token::Ident("foo"),
+            Token::Assign,
+            Token::Ident("bar"),
+            Token::Semi,
+        ];
+
+        let expected = Statement::Assign(AssignStmt {
+            target: PathExpr {
+                first: Ident::new("foo"),
+                extra: vec![],
+            },
+            value: Expression::Atomic(AtomicExpr::Path(PathExpr {
+                first: Ident::new("bar"),
+                extra: vec![],
+            })),
+        });
+
+        let actual = Statement::parser().parse(&input).unwrap();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_return_stmt() {
+        let input = vec![Token::Return, Token::Ident("foo"), Token::Semi];
+
+        let expected =
+            Statement::Return(Expression::Atomic(AtomicExpr::Path(PathExpr {
+                first: Ident::new("foo"),
+                extra: vec![],
+            })));
+
+        let actual = Statement::parser().parse(&input).unwrap();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_discard_stmt() {
+        let input = vec![Token::Ident("foo"), Token::Semi];
+
+        let expected = Statement::Discard(Expression::Atomic(AtomicExpr::Path(PathExpr {
+            first: Ident::new("foo"),
+            extra: vec![],
+        })));
+
+        let actual = Statement::parser().parse(&input).unwrap();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_let_stmt() {
+        let input = vec![
+            Token::Let,
+            Token::Ident("foo"),
+            Token::Colon,
+            Token::Ident("bar"),
+            Token::Assign,
+            Token::Ident("baz"),
+            Token::Semi,
+        ];
+
+        let expected = Statement::Let(LetStmt {
+            is_mutable: false,
+            target: LetStmtTarget::Simple {
+                name: Ident::new("foo"),
+                r#type: TypeSpec::Simple {
+                    name: Ident::new("bar"),
+                },
+            },
+            value: Expression::Atomic(AtomicExpr::Path(PathExpr {
+                first: Ident::new("baz"),
+                extra: vec![],
+            })),
+        });
+
+        let actual = Statement::parser().parse(&input).unwrap();
+
+        assert_eq!(actual, expected);
+    }
+}
