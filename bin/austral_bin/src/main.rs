@@ -1,7 +1,7 @@
 use austral_lib::ast::ModuleDef;
 use chumsky::Parser as _;
 use clap::Parser;
-use melior::{Context, dialect::DialectRegistry};
+use melior::{dialect::DialectRegistry, Context};
 use std::fs;
 
 #[derive(Parser, Debug)]
@@ -57,13 +57,21 @@ fn main() {
     });
     context.load_all_available_dialects();
 
-    let compiled_module = austral_lib::compiler::compile(&context, &ast, &[]);
+    let mut compiled_module = austral_lib::compiler::compile(&context, &ast, &[]);
 
     if args.emit_mlir {
         let mlir_code = compiled_module.as_operation();
         println!("{mlir_code}");
+        return;
     }
 
-
-
+    if args.emit_llvm {
+        austral_lib::compiler::run_pass_manager(&context, &mut compiled_module).unwrap();
+        let optimized_code = compiled_module.as_operation();
+        println!("{optimized_code}");
+        return;
+    }
 }
+
+
+// "$MLIR_SYS_170_PREFIX/bin/mlir-translate" --mlir-to-llvmir "$OUTPUT_DIR/$base_name.opt.mlir" -o "$OUTPUT_DIR/$base_name.ll" >> /dev/stderr
