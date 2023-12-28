@@ -1,6 +1,6 @@
 use crate::{
     common::Identifier,
-    r#type::Universe,
+    r#type::{Ty, Universe},
     stages::{TExpr, TStmt},
     type_system::type_universe,
 };
@@ -41,7 +41,7 @@ pub enum Partitions {
 }
 
 impl Partitions {
-    pub fn partition(n: usize) -> Self {
+    pub fn partition(n: i32) -> Self {
         if n > 1 {
             Partitions::MoreThanOne
         } else if n == 1 {
@@ -122,8 +122,94 @@ pub fn check_statement(state_table: &mut StateTable, stmt: &TStmt, depth: i32) -
     }
 }
 
-fn check_expression(_state_table: &mut StateTable, _depth: i32, _texpr: &TExpr) -> bool {
+fn check_expression(state_table: &mut StateTable, depth: i32, texpr: &TExpr) -> bool {
+    // For each variable in the table, check if the variable is used correctly in
+    // the expression
+    let vars: Vec<Identifier> = state_table.iter().map(|(name, _)| name.clone()).collect();
+
+    for name in vars {
+        let ty = Ty::Unit; // TODO: Get the type of the variable from the state table
+        if !check_var_in_expr(state_table, depth, &name, &ty, texpr) {
+            return false;
+        }
+    }
     true
+}
+
+fn count(name: &Identifier, texpr: &TExpr) -> Appearances {
+    match texpr {
+        TExpr::TNilConstant
+        | TExpr::TBoolConstant(_)
+        | TExpr::TIntConstant(_)
+        | TExpr::TFloatConstant(_)
+        | TExpr::TConstVar(_, _) // Constants variables can't be linear.
+        | TExpr::TStringConstant(_) => Appearances::default(),
+
+        TExpr::TParamVar(var_name, _)
+        | TExpr::TLocalVar(var_name, _)
+        | TExpr::TTemporary(var_name, _) =>
+            if var_name == name {
+                Appearances {
+                    consumed: 1,
+                    ..Appearances::default()
+                }
+            } else {
+                Appearances::default()
+            },
+
+        TExpr::TVarMethodCall {
+            source_module_name: _,
+            typeclass_id: _,
+            params: _,
+            method_name: _,
+            args: _,
+            dispatch_ty: _,
+            rt: _,
+        } => todo!(),
+        TExpr::TFptrCall(_, _, _) => todo!(),
+        TExpr::TCast(_, _) => todo!(),
+        TExpr::TComparison(_, _, _) => todo!(),
+        TExpr::TConjunction(_, _) => todo!(),
+        TExpr::TDisjunction(_, _) => todo!(),
+        TExpr::TNegation(_) => todo!(),
+        TExpr::TIfExpression(_, _, _) => todo!(),
+        TExpr::TRecordConstructor(_, _) => todo!(),
+        TExpr::TUnionConstructor(_, _, _) => todo!(),
+        TExpr::TSlotAccessor(_, _, _) => todo!(),
+        TExpr::TPointerSlotAccessor(_, _, _) => todo!(),
+        TExpr::TArrayIndex(_, _, _) => todo!(),
+        TExpr::TSpanIndex(_, _, _) => todo!(),
+        TExpr::TEmbed(_, _, _) => todo!(),
+        TExpr::TDeref(_) => todo!(),
+        TExpr::TSizeOf(_) => todo!(),
+    }
+}
+
+fn check_var_in_expr(
+    state_table: &mut StateTable,
+    depth: i32,
+    name: &Identifier,
+    _ty: &Ty,
+    texpr: &TExpr,
+) -> bool {
+    let apps = count(name, texpr);
+    let consumed = apps.consumed;
+    let state = state_table
+        .get(name)
+        .map(|x| x.1.clone())
+        .unwrap_or_default();
+
+    // Make a tuple with the variable's state, and the partitioned appearances
+    let tup = (state, Partitions::partition(consumed));
+
+    match tup {
+        (_, Partitions::Zero) => true,
+        (VarState::Unconsumed, Partitions::One) => {
+            state_table.remove(name);
+            true
+        }
+        _ => false,
+    }
 }
 
 #[cfg(test)]
@@ -161,6 +247,7 @@ mod test {
     fn test_let_hash_with_values() {
         let mut state_table = HashMap::new();
         state_table.insert(Identifier(String::from("x")), (0_i32, VarState::default()));
+        state_table.insert(Identifier(String::from("y")), (0_i32, VarState::default()));
         let stmt = TStmt::TLet(
             Span::default(),
             Identifier::new("x"),
@@ -170,5 +257,23 @@ mod test {
             Box::new(TStmt::TSkip(Span::default())),
         );
         let _result = check_statement(&mut state_table, &stmt, 0);
+    }
+
+    #[test]
+    fn test_let_and_consumed() {
+        let mut state_table = HashMap::new();
+        let stmt = TStmt::TLet(
+            Span::default(),
+            Identifier::new("x"),
+            Box::new(TExpr::TIntConstant("1".to_string())),
+            Mutability::Immutable,
+            Ty::SpanMut(Box::new(Ty::Boolean), Box::new(Ty::Boolean)),
+            Box::new(TStmt::TReturn(
+                Span::default(),
+                Box::new(TExpr::TLocalVar(Identifier(String::from("x")), Ty::Boolean)),
+            )),
+        );
+        let result = check_statement(&mut state_table, &stmt, 0);
+        assert!(result);
     }
 }
