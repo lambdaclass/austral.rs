@@ -487,3 +487,32 @@ impl Binding {
         })
     }
 }
+
+#[cfg(test)]
+mod statement_parser_tests {
+    use super::*;
+    use crate::{ast::AtomicExpr, lexer::Token};
+    use std::vec;
+
+    #[test]
+    fn test_assign_stmt() {
+        let input = vec![
+            Token::Ident("foo"),
+            Token::Assign,
+            Token::Ident("bar"),
+            Token::Semi,
+        ];
+
+        let expected = Statement::Assign(AssignStmt {
+            target: PathExpr {
+                first: Ident::new("foo"),
+                extra: vec![],
+            },
+            value: Expression::Atomic(AtomicExpr::Variable(Ident::new("bar"))),
+        });
+
+        let actual = Statement::parser().parse(&input).unwrap();
+
+        assert_eq!(actual, expected);
+    }
+}
