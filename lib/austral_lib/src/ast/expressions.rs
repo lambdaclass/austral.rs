@@ -490,7 +490,7 @@ impl PathSegment {
                         .ignore_then(Ident::parser())
                         .map(Self::PtrSlotAccess),
                     Expression::recursive_parser(cache.clone())
-                        .delimited_by(just(Token::LParen), just(Token::RParen))
+                        .delimited_by(just(Token::LBracket), just(Token::RBracket))
                         .map(Box::new)
                         .map(Self::ArrayIndex),
                 )));
