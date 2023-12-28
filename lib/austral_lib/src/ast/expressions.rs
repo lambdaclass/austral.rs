@@ -66,10 +66,9 @@ pub enum AtomicExpr {
     ConstFloat(f64),
     ConstStr(String),
 
+    FnCall(FnCallExpr),
     Path(PathExpr),
     RefPath(PathExpr),
-    Variable(Ident),
-    FnCall(FnCallExpr),
     Paren(Box<Expression>),
     Intrinsic(IntrinExpr),
 
@@ -102,12 +101,11 @@ impl AtomicExpr {
                     literal_u64().map(Self::ConstInt),
                     literal_f64().map(Self::ConstFloat),
                     literal_str().map(Cow::into_owned).map(Self::ConstStr),
+                    FnCallExpr::recursive_parser(cache.clone()).map(Self::FnCall),
                     PathExpr::recursive_parser(cache.clone()).map(Self::Path),
                     PathExpr::recursive_parser(cache.clone())
                         .delimited_by(just(Token::RefTransform), just(Token::RParen))
                         .map(Self::RefPath),
-                    FnCallExpr::recursive_parser(cache.clone()).map(Self::FnCall),
-                    Ident::parser().map(Self::Variable),
                     Expression::recursive_parser(cache.clone())
                         .boxed()
                         .delimited_by(just(Token::LParen), just(Token::RParen))
@@ -431,7 +429,6 @@ impl PathExpr {
                         .then(
                             PathSegment::recursive_parser(cache.clone())
                                 .repeated()
-                                .at_least(1)
                                 .collect::<Vec<_>>(),
                         )
                         .map(|(first, extra)| Self { first, extra }),
