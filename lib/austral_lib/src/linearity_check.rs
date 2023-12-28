@@ -56,12 +56,7 @@ impl Partitions {
 
 pub type StateTable = HashMap<Identifier, (i32, VarState)>;
 
-pub fn check_statement(
-    stmt_name: &str,
-    state_table: &mut StateTable,
-    stmt: &TStmt,
-    depth: i32,
-) -> bool {
+pub fn check_statement(state_table: &mut StateTable, stmt: &TStmt, depth: i32) -> bool {
     match stmt {
         TStmt::TSkip(_) => true,
         TStmt::TLet(_, name, expr, _, ty, body) => {
@@ -70,12 +65,12 @@ pub fn check_statement(
             check_expression(state_table, depth, expr);
             if type_universe(ty) == Universe::LinearUniverse {
                 state_table.insert(name.clone(), (depth, VarState::Unconsumed));
-                let result = check_statement(stmt_name, state_table, body, depth);
+                let result = check_statement(state_table, body, depth);
                 // the body extends until the end of the block (scope)
                 state_table.remove(name);
                 result
             } else {
-                check_statement(stmt_name, state_table, body, depth)
+                check_statement(state_table, body, depth)
             }
         }
         TStmt::TAssign(_, lvalue, rvalue) => {
@@ -108,8 +103,8 @@ pub fn check_statement(
             let cond_result = true; //check_expression(state_table, depth, cond);
             let mut then_table = state_table.clone();
             let mut else_table = state_table.clone();
-            let then_result = check_statement(stmt_name, &mut then_table, then_stmt, depth);
-            let else_result = check_statement(stmt_name, &mut else_table, else_stmt, depth);
+            let then_result = check_statement(&mut then_table, then_stmt, depth);
+            let else_result = check_statement(&mut else_table, else_stmt, depth);
             *state_table = then_table;
             cond_result && then_result && else_result && *state_table == else_table
         }
@@ -118,12 +113,12 @@ pub fn check_statement(
         }
         TStmt::TWhile(_, _cond, body) => {
             //check_expression(state_table, depth, cond) &&
-            check_statement(stmt_name, state_table, body, depth + 1)
+            check_statement(state_table, body, depth + 1)
         }
         TStmt::TFor(_, _, start, end, body) => {
             check_expression(state_table, depth, start)
                 && check_expression(state_table, depth, end)
-                && check_statement(stmt_name, state_table, body, depth + 1)
+                && check_statement(state_table, body, depth + 1)
         }
     }
 }
@@ -154,7 +149,7 @@ mod test {
             Ty::SpanMut(Box::new(Ty::Boolean), Box::new(Ty::Boolean)),
             Box::new(TStmt::TSkip(Span::default())),
         );
-        let result = check_statement("test_let", &mut state_table, &stmt, 0);
+        let result = check_statement(&mut state_table, &stmt, 0);
         assert!(result);
     }
 }
