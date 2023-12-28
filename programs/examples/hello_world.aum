@@ -1,6 +1,6 @@
 module body Test is
     function main(): ExitCode is
-        pritnLn("Hello World!");
+        printLn("Hello World!");
         return ExitSuccess();
     end;
 end module body.
