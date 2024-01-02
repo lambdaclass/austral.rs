@@ -84,7 +84,7 @@ Used in `CConstant`.
 
 Used in `CFunction` and `CMethodDef`.
 
-1. `LiftControlPass.lift` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/LiftControlPass.ml#L11): It receives an AST expression. For each  assignment, condition and loop expression, it refactors its containing expression into a temporary variable declaration (e.g. it extracts the condition inside an `if` into a temporary variable).
+1. `LiftControlPass.lift` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/LiftControlPass.ml#L11): For each variable assignment, condition and loop expression, it refactors its containing expression into a temporary variable declaration (e.g. it extracts the condition inside an `if` into a temporary variable).
 1. `DesugarPaths.transform_stmt` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/DesugarPaths.ml#L101)
 1. `DesugarBorrows.transform_stmt` [code](https://github.com/austral/austral/blob/246f521c46825b58f81b2e489d2933be4e5ed9ad/lib/DesugarBorrows.ml#L160)
 
