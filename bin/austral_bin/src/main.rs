@@ -1,13 +1,12 @@
 use austral_lib::ast::ModuleDef;
-use chumsky::Parser as _;
-use clap::Parser;
+use chumsky::Parser;
 use melior::{dialect::DialectRegistry, Context};
 use std::{
     fs,
-    process::{Command, Stdio},
+    process::{Child, Command, Stdio},
 };
 
-#[derive(Parser, Debug)]
+#[derive(clap::Parser, Debug)]
 #[clap(name = "austral", about = "Austral compiler")]
 struct AustralCli {
     /// File to compile
@@ -36,7 +35,7 @@ struct AustralCli {
 }
 
 fn main() {
-    let args = AustralCli::parse();
+    let args: AustralCli = clap::Parser::parse();
 
     let input_file = fs::read_to_string(args.input_file).unwrap();
 
@@ -68,23 +67,44 @@ fn main() {
         return;
     }
 
-    if args.emit_llvm {
+    if args.emit_llvm || args.emit_assembler || args.emit_object {
         austral_lib::compiler::run_pass_manager(&context, &mut compiled_module).unwrap();
         let optimized_code = compiled_module.as_operation();
 
-        let echo = Command::new("echo")
-            .arg(&format!("{}", optimized_code))
-            .stdout(Stdio::piped())
-            .spawn()
-            .unwrap();
+        let echo_mlir = echo(&optimized_code.to_string()).unwrap();
 
         let mlir_traslate = Command::new("/opt/homebrew/opt/llvm/bin/mlir-translate")
             .args(["--mlir-to-llvmir", "-"])
-            .stdin(Stdio::from(echo.stdout.unwrap()))
+            .stdin(Stdio::from(echo_mlir.stdout.unwrap()))
             .spawn();
 
         let output = mlir_traslate.unwrap().wait_with_output().unwrap();
-        println!("{}", String::from_utf8_lossy(&output.stdout));
+        let llvm_ir = String::from_utf8_lossy(&output.stdout);
+        if args.emit_llvm {
+            println!("{}", llvm_ir.to_string());
+            return;
+        }
+
+        // if args.emit_assembler {
+        //     let echo_llvmir = echo(&llvm_ir.to_string()).unwrap();
+        //     let clang_asm = Command::new("clang")
+        //         .args(["-S", "-o", "out.s", "-x", "ir", "-"])
+        //         .stdin(Stdio::from(echo_llvmir.stdout.unwrap()))
+        //         .spawn();
+
+        //     let clang_output = clang_asm.unwrap().wait_with_output().unwrap();
+        //     let asm = String::from_utf8_lossy(&clang_output.stdout);
+        //     println!("{}", asm.to_string());
+        //     return;
+        // }
+
         return;
     }
+}
+
+fn echo(text: &str) -> Result<Child, std::io::Error> {
+    Command::new("echo")
+        .arg(&format!("{}", text))
+        .stdout(Stdio::piped())
+        .spawn()
 }
