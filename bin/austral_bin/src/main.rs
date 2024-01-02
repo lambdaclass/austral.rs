@@ -1,8 +1,9 @@
-use austral_lib::ast::ModuleDef;
+use austral_lib::{ast::ModuleDef, compiler::compile_to_binary};
 use chumsky::Parser;
 use melior::{dialect::DialectRegistry, Context};
 use std::{
     fs,
+    path::Path,
     process::{Child, Command, Stdio},
 };
 
@@ -14,8 +15,11 @@ struct AustralCli {
     input_file: String,
 
     /// Emit object file
-    #[arg(short = 'o', long = "output", default_value_t = false)]
-    emit_object: bool,
+    #[arg(short = 'o', long = "output")]
+    output: Option<String>,
+
+    #[arg(long, default_value_t = false)]
+    lib: bool,
 
     /// Emit assembly
     #[arg(short = 's', long = "assembly", default_value_t = false)]
@@ -67,8 +71,9 @@ fn main() {
         return;
     }
 
-    if args.emit_llvm || args.emit_assembler || args.emit_object {
-        austral_lib::compiler::run_pass_manager(&context, &mut compiled_module).unwrap();
+    if args.emit_llvm || args.emit_assembler {
+        austral_lib::backend::pass_manager::run_pass_manager(&context, &mut compiled_module)
+            .unwrap();
         let optimized_code = compiled_module.as_operation();
 
         let echo_mlir = echo(&optimized_code.to_string()).unwrap();
@@ -100,6 +105,14 @@ fn main() {
 
         return;
     }
+
+    let output = args.output.unwrap_or(if args.lib {
+        String::from("a.dylib")
+    } else {
+        String::from("a.out")
+    });
+
+    compile_to_binary(&input_file, args.lib, Path::new(&output)).unwrap();
 }
 
 fn echo(text: &str) -> Result<Child, std::io::Error> {

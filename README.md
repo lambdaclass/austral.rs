@@ -35,6 +35,8 @@ For instance, to print the AST of the hello world example program:
 ```bash
 cd bin/austral_bin
 cargo r -- ../../programs/examples/hello_world.aum
+./a.out
+# prints Hello world!
 ```
 
 ## Docs
