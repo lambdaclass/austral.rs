@@ -2,7 +2,7 @@ mod codegen;
 mod context;
 mod error;
 mod module;
-mod pass_manager;
+pub mod pass_manager;
 
 // TODO: Remove this when we have a proper Program (we should get it from the DB).
 #[allow(dead_code)]

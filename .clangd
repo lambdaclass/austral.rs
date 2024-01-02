@@ -1,0 +1,2 @@
+CompileFlags:
+    Add: [-xc++, -Wall, -I/opt/homebrew/opt/llvm@17/include, -std=c++17]
