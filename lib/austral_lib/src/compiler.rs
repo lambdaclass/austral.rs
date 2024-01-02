@@ -414,7 +414,12 @@ pub fn compile_to_binary(
     let mut module = compile(&context, &ast, &[]);
     run_pass_manager(&context, &mut module)?;
     let object = module_to_object(&module, is_library)?;
-    object_to_shared_lib(&object, output_filename)?;
+
+    if is_library {
+        object_to_shared_lib(&object, output_filename)?;
+    } else {
+        object_to_binary(&object, output_filename)?;
+    }
 
     Ok(())
 }
@@ -559,6 +564,49 @@ pub fn object_to_shared_lib(object: &[u8], output_filename: &Path) -> Result<(),
                 "--hash-style=gnu",
                 "--eh-frame-hdr",
                 "-shared",
+                "-o",
+                &output_filename.display().to_string(),
+                "-L/lib/../lib64",
+                "-L/usr/lib/../lib64",
+                "-lc",
+                &file.display().to_string(),
+            ]
+        }
+        #[cfg(target_os = "windows")]
+        {
+            unimplemented!()
+        }
+    };
+
+    let mut linker = std::process::Command::new("ld");
+    let proc = linker.args(args.iter()).spawn()?;
+    proc.wait_with_output()?;
+    Ok(())
+}
+
+pub fn object_to_binary(object: &[u8], output_filename: &Path) -> Result<(), std::io::Error> {
+    // linker seems to need a file and doesn't accept stdin
+    let mut file = NamedTempFile::new()?;
+    file.write_all(object)?;
+    let file = file.into_temp_path();
+
+    let args: &[&str] = {
+        #[cfg(target_os = "macos")]
+        {
+            &[
+                "-L/usr/local/lib",
+                "-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib",
+                &file.display().to_string(),
+                "-o",
+                &output_filename.display().to_string(),
+                "-lSystem",
+            ]
+        }
+        #[cfg(target_os = "linux")]
+        {
+            &[
+                "--hash-style=gnu",
+                "--eh-frame-hdr",
                 "-o",
                 &output_filename.display().to_string(),
                 "-L/lib/../lib64",
