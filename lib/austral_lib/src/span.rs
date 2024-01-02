@@ -11,7 +11,16 @@ pub struct SpanLocation {
     pub column: NonZeroUsize,
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+impl Default for SpanLocation {
+    fn default() -> Self {
+        Self {
+            line: NonZeroUsize::MIN,
+            column: NonZeroUsize::MIN,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Default)]
 pub struct Span {
     pub context: SpanContext,
     pub range: Range<SpanLocation>,
@@ -36,4 +45,10 @@ impl chumsky::span::Span for Span {
     fn end(&self) -> Self::Offset {
         self.range.end
     }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Position {
+    pub line: usize,
+    pub column: usize,
 }

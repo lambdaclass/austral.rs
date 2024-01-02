@@ -8,7 +8,14 @@ pub enum BorrowingMode {
     WriteBorrow,
 }
 
-pub struct Identifier(String);
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct Identifier(pub String);
+
+impl Identifier {
+    pub fn new(s: &str) -> Self {
+        Identifier(s.to_string())
+    }
+}
 
 pub struct QIdent {
     pub source: ModuleName,
@@ -16,8 +23,10 @@ pub struct QIdent {
     pub local: Identifier,
 }
 
-pub struct ModuleName(String);
+#[derive(Clone, Debug)]
+pub struct ModuleName(pub String);
 
+#[derive(Clone, Debug)]
 pub struct DeclId(i32);
 
 pub enum ComparisonOperator {
