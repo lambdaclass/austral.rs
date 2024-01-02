@@ -1,5 +1,6 @@
 # austral
-An implementation of the Austral language compiler in Rust
+An implementation of the Austral language compiler in Rust.
+Austral is a new systems programming language. It uses linear types to provide memory safety and capability-secure code.
 
 ## Requisites
 - LLVM 17 with MLIR support.
@@ -23,14 +24,12 @@ After that, `cargo build --all` should work.
 
 Run:
 
+To compile an Austral file:
+
 ```bash
 cd bin/austral_bin
 cargo r -- <module_file>
 ```
-
-For now, it only prints the AST to stdout.
-
-For instance, to print the AST of the hello world example program:
 
 ```bash
 cd bin/austral_bin
@@ -38,6 +37,21 @@ cargo r -- ../../programs/examples/hello_world.aum
 ./a.out
 # prints Hello world!
 ```
+
+You can also print the parsed AST and get the MLIR and LLVM representation of the program.
+
+To see all the available options run:
+```bash
+cargo r -- --help
+```
+
+## Status
+- [x] Lexer
+- [x] Parser
+- [ ] Compilation Passes
+- [ ] Type checker
+- [x] Code generation of simple programs
+- [ ] Full code generation
 
 ## Docs
 
