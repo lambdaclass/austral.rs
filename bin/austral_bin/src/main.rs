@@ -1,7 +1,7 @@
-use austral_lib::ast::ModuleDef;
+use austral_lib::{ast::ModuleDef, compiler::compile_to_binary};
 use chumsky::Parser as _;
 use clap::Parser;
-use std::fs;
+use std::{fs, path::Path};
 
 #[derive(Parser, Debug)]
 #[clap(name = "austral", about = "Austral compiler")]
@@ -11,8 +11,11 @@ struct AustralCli {
     input_file: String,
 
     /// Emit object file
-    #[arg(short = 'o', long = "output", default_value_t = false)]
-    emit_object: bool,
+    #[arg(short = 'o', long = "output")]
+    output: Option<String>,
+
+    #[arg(long, default_value_t = false)]
+    lib: bool,
 
     /// Emit assembly
     #[arg(short = 's', long = "assembly", default_value_t = false)]
@@ -46,4 +49,12 @@ fn main() {
     if args.print_ast {
         println!("{ast:#?}");
     }
+
+    let output = args.output.unwrap_or(if args.lib {
+        String::from("a.dylib")
+    } else {
+        String::from("a.out")
+    });
+
+    compile_to_binary(&input_file, args.lib, Path::new(&output)).unwrap();
 }
