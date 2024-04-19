@@ -231,7 +231,7 @@ fn build_expr<'c, 'b>(
                             None,
                             MemRefType::new(
                                 IntegerType::new(ctx, 8).into(),
-                                &[value.len() as u64],
+                                &[value.len() as i64],
                                 None,
                                 None,
                             ),
@@ -272,7 +272,7 @@ fn build_expr<'c, 'b>(
                         &format!("LiteralStr{literal_idx}"),
                         MemRefType::new(
                             IntegerType::new(ctx, 8).into(),
-                            &[value.len() as u64],
+                            &[value.len() as i64],
                             None,
                             None,
                         ),
